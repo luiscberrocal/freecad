@@ -1,0 +1,408 @@
+# -*- coding: utf-8 -*-
+"""CreateOctagon.FCMacro
+
+Creates a regular octagon as a sketch in the active PartDesign Body, attached
+to the body origin plane of your choosing (XY, XZ or YZ) and centred on the
+origin (0, 0, 0). Aborts if no Body is active.
+
+The edge length is read from a spreadsheet named ``globals`` which must define
+the aliases ``side`` and ``tolerance`` (values in mm):
+
+    edge = side + tolerance
+
+If there is no such spreadsheet, the macro prompts for both values and creates
+the spreadsheet from them.
+
+The sketch is fully constrained (0 DoF), and its radius constraint is bound to
+the spreadsheet by expression, so editing ``side`` or ``tolerance`` resizes the
+octagon on the next recompute.
+
+FreeCAD 1.1
+"""
+
+import math
+
+import FreeCAD as App
+
+try:
+    import FreeCADGui as Gui
+    from PySide import QtGui
+
+    GUI_UP = App.GuiUp
+except ImportError:  # running headless / from the console
+    Gui = None
+    QtGui = None
+    GUI_UP = False
+
+__Name__ = "Create Octagon"
+__Comment__ = "Octagon centred on origin, sized from the 'globals' spreadsheet"
+__Author__ = "Luis C. Berrocal"
+__Version__ = "1.0.0"
+
+SHEET_NAME = "globals"
+REQUIRED_ALIASES = ("side", "tolerance")
+
+# Used when the macro runs without a GUI (no dialog to pick from).
+DEFAULT_PLANE = "XY"
+
+# Pre-filled in the manual entry dialogs shown when there is no spreadsheet.
+PROMPT_DEFAULTS = {"side": 10.0, "tolerance": 0.0}
+PROMPT_DECIMALS = 3
+
+# First vertex at 22.5 deg puts the flats parallel to the sketch axes, which
+# makes line 5 the bottom edge (the one held horizontal).
+FIRST_VERTEX_ANGLE = 22.5
+BOTTOM_EDGE = 5
+
+# Named so the radius can be reached by expression as Constraints.<name>.
+RADIUS_CONSTRAINT = "OctagonRadius"
+
+# Plane choice -> Role of the body origin plane the sketch is attached to.
+PLANE_ROLES = {
+    "XY": "XY_Plane",
+    "XZ": "XZ_Plane",
+    "YZ": "YZ_Plane",
+}
+
+
+class MacroError(Exception):
+    """Raised for any condition that should abort the macro with a message."""
+
+
+def report(message, title="Create Octagon", icon="warning"):
+    """Show ``message`` to the user, both on the console and in a dialog."""
+    App.Console.PrintError("{0}\n".format(message))
+    if GUI_UP and QtGui is not None:
+        box = QtGui.QMessageBox.critical if icon == "error" else QtGui.QMessageBox.warning
+        box(Gui.getMainWindow(), title, message)
+
+
+def get_document():
+    doc = App.ActiveDocument
+    if doc is None:
+        raise MacroError(
+            "There is no active document. Open or create a document first."
+        )
+    return doc
+
+
+def get_active_body(doc):
+    """Return the active PartDesign Body, or abort if there is not one."""
+    body = None
+    if GUI_UP and Gui is not None and Gui.ActiveDocument is not None:
+        view = Gui.ActiveDocument.ActiveView
+        if view is not None and hasattr(view, "getActiveObject"):
+            body = view.getActiveObject("pdbody")
+
+    bodies = [o for o in doc.Objects if o.isDerivedFrom("PartDesign::Body")]
+
+    if body is None and not GUI_UP and len(bodies) == 1:
+        # Headless runs have no notion of an "active" object; a document with
+        # exactly one body is unambiguous.
+        body = bodies[0]
+
+    if body is None:
+        if not bodies:
+            raise MacroError(
+                "There is no PartDesign Body in document '{0}'.\n\n"
+                "Switch to the Part Design workbench and create a Body "
+                "first.".format(doc.Label)
+            )
+        raise MacroError(
+            "No Body is active.\n\n"
+            "Double-click a Body in the model tree to activate it, then run "
+            "the macro again."
+        )
+    return body
+
+
+def find_spreadsheet(doc, name=SHEET_NAME):
+    """Return the spreadsheet whose Name or Label matches ``name``, or None."""
+    for obj in doc.Objects:
+        if obj.isDerivedFrom("Spreadsheet::Sheet") and name.lower() in (
+            obj.Name.lower(),
+            obj.Label.lower(),
+        ):
+            return obj
+    return None
+
+
+def create_spreadsheet(doc, values, aliases=REQUIRED_ALIASES):
+    """Create the spreadsheet from prompted values, one alias per row, so
+    later runs read it instead of asking again."""
+    sheet = doc.addObject("Spreadsheet::Sheet", SHEET_NAME)
+    sheet.Label = SHEET_NAME
+    for row, alias in enumerate(aliases, start=1):
+        sheet.set("A{0}".format(row), alias)
+        # Written with units so the cell is unambiguous when edited by hand.
+        sheet.set("B{0}".format(row), "{0:.10g} mm".format(values[alias]))
+        sheet.setAlias("B{0}".format(row), alias)
+    doc.recompute()
+    return sheet
+
+
+def ask_values(aliases=REQUIRED_ALIASES):
+    """Prompt for each required value in mm. Returns None if cancelled."""
+    if not GUI_UP or QtGui is None:
+        raise MacroError(
+            "No spreadsheet named '{0}' was found and there is no GUI to "
+            "prompt from. Create a Spreadsheet named '{0}' with the aliases: "
+            "{1}.".format(SHEET_NAME, ", ".join(aliases))
+        )
+
+    QtGui.QMessageBox.information(
+        Gui.getMainWindow(),
+        "Create Octagon",
+        "No spreadsheet named '{0}' was found in this document.\n\n"
+        "Enter the values and a '{0}' spreadsheet will be created with "
+        "them.".format(SHEET_NAME),
+    )
+
+    values = {}
+    for alias in aliases:
+        value, ok = QtGui.QInputDialog.getDouble(
+            Gui.getMainWindow(),
+            "Create Octagon",
+            "{0} (mm):".format(alias),
+            PROMPT_DEFAULTS.get(alias, 0.0),
+            -1e6,  # minimum
+            1e6,  # maximum
+            PROMPT_DECIMALS,
+        )
+        if not ok:
+            return None
+        values[alias] = float(value)
+    return values
+
+
+def to_mm(value, alias):
+    """Convert a spreadsheet cell value to a float in millimetres."""
+    if isinstance(value, App.Units.Quantity):
+        try:
+            return float(value.getValueAs("mm"))
+        except Exception:
+            raise MacroError(
+                "Alias '{0}' is '{1}', which is not a length. Use a plain "
+                "number or a length such as 10 mm.".format(alias, value)
+            )
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise MacroError(
+            "Alias '{0}' must hold a number in mm, but it holds '{1}' "
+            "({2}).".format(alias, value, type(value).__name__)
+        )
+    return float(value)
+
+
+def read_aliases(sheet, aliases=REQUIRED_ALIASES):
+    """Read every required alias, reporting all the missing ones at once."""
+    values = {}
+    missing = []
+    for alias in aliases:
+        try:
+            raw = sheet.get(alias)
+        except Exception:
+            missing.append(alias)
+            continue
+        if raw is None:
+            missing.append(alias)
+            continue
+        values[alias] = to_mm(raw, alias)
+
+    if missing:
+        raise MacroError(
+            "Spreadsheet '{0}' is missing the alias(es): {1}.\n\n"
+            "Select the cell holding each value, then set its alias in the "
+            "cell properties (Alias field).".format(
+                sheet.Label, ", ".join(missing)
+            )
+        )
+    return values
+
+
+def ask_plane():
+    """Ask the user which plane to draw on; falls back to DEFAULT_PLANE."""
+    planes = list(PLANE_ROLES)
+    if not GUI_UP or QtGui is None:
+        App.Console.PrintMessage(
+            "No GUI available, using the {0} plane.\n".format(DEFAULT_PLANE)
+        )
+        return DEFAULT_PLANE
+
+    choice, ok = QtGui.QInputDialog.getItem(
+        Gui.getMainWindow(),
+        "Create Octagon",
+        "Draw the octagon on which plane?",
+        planes,
+        planes.index(DEFAULT_PLANE),
+        False,
+    )
+    if not ok:
+        return None
+    return choice
+
+
+def circumradius(edge):
+    """Radius of the circle through the vertices of a regular octagon."""
+    return edge / (2.0 * math.sin(math.pi / 8.0))
+
+
+def octagon_points(edge):
+    """Vertices of a regular octagon of the given edge length, centred on the
+    sketch origin, with its flats parallel to the sketch X and Y axes."""
+    radius = circumradius(edge)
+    points = []
+    for i in range(8):
+        angle = math.radians(FIRST_VERTEX_ANGLE + i * 45.0)
+        points.append(
+            App.Vector(
+                radius * math.cos(angle),
+                radius * math.sin(angle),
+                0.0,
+            )
+        )
+    return points
+
+
+def origin_plane(body, plane):
+    """Return the body's origin plane matching the chosen plane."""
+    role = PLANE_ROLES[plane]
+    origin = getattr(body, "Origin", None)
+    if origin is not None:
+        for feature in origin.OriginFeatures:
+            if getattr(feature, "Role", None) == role:
+                return feature
+    raise MacroError(
+        "Body '{0}' has no {1} origin plane to attach the sketch "
+        "to.".format(body.Label, role)
+    )
+
+
+def build_sketch(body, edge, plane, sheet=None):
+    """Create the octagon as a fully constrained sketch attached to a body
+    origin plane. If ``sheet`` is given, the radius is driven by an expression
+    referencing it so the octagon follows the spreadsheet."""
+    import Part
+    import Sketcher
+
+    sketch = body.newObject("Sketcher::SketchObject", "Octagon")
+    sketch.Label = "Octagon_{0}".format(plane)
+
+    # Attaching to the origin plane keeps the sketch tied to the body rather
+    # than to a hard-coded placement.
+    sketch.AttachmentSupport = [(origin_plane(body, plane), "")]
+    sketch.MapMode = "FlatFace"
+
+    points = octagon_points(edge)
+    for i in range(8):
+        sketch.addGeometry(Part.LineSegment(points[i], points[(i + 1) % 8]), False)
+
+    # Construction circle through the vertices: the octagon is constrained
+    # against it, exactly like the Sketcher polygon tool does it.
+    circle = sketch.addGeometry(
+        Part.Circle(
+            App.Vector(0, 0, 0), App.Vector(0, 0, 1), circumradius(edge)
+        ),
+        True,
+    )
+
+    # 8 lines + 1 circle = 35 DoF. The constraints below remove all of them.
+    for i in range(8):
+        sketch.addConstraint(
+            Sketcher.Constraint("Coincident", i, 2, (i + 1) % 8, 1)
+        )  # -16, closes the profile
+    sketch.addConstraint(
+        Sketcher.Constraint("Coincident", circle, 3, -1, 1)
+    )  # -2, circle centred on the sketch origin
+    for i in range(8):
+        sketch.addConstraint(
+            Sketcher.Constraint("PointOnObject", i, 1, circle)
+        )  # -8, vertices on the circle
+    for i in range(7):
+        sketch.addConstraint(
+            Sketcher.Constraint("Equal", i, i + 1)
+        )  # -7, all sides the same length
+    sketch.addConstraint(
+        Sketcher.Constraint("Horizontal", BOTTOM_EDGE)
+    )  # -1, locks rotation
+
+    radius = sketch.addConstraint(
+        Sketcher.Constraint("Radius", circle, circumradius(edge))
+    )  # -1, locks size -> 0 DoF
+    sketch.renameConstraint(radius, RADIUS_CONSTRAINT)
+
+    if sheet is not None:
+        bind_radius(sketch, sheet)
+
+    return sketch
+
+
+def bind_radius(sketch, sheet):
+    """Drive the radius constraint from the spreadsheet, so editing ``side``
+    or ``tolerance`` resizes the octagon on the next recompute."""
+    expression = "({0}.{1} + {0}.{2}) / (2 * sin(22.5deg))".format(
+        sheet.Name, REQUIRED_ALIASES[0], REQUIRED_ALIASES[1]
+    )
+    try:
+        sketch.setExpression(
+            "Constraints.{0}".format(RADIUS_CONSTRAINT), expression
+        )
+    except Exception as exc:
+        # A numeric radius is still correct, it just will not track the sheet.
+        App.Console.PrintWarning(
+            "Could not bind the radius to '{0}' ({1}). The octagon was "
+            "created with a fixed size.\n".format(sheet.Label, exc)
+        )
+
+
+def main():
+    try:
+        doc = get_document()
+        # Checked up front so the macro fails before asking for anything.
+        body = get_active_body(doc)
+        sheet = find_spreadsheet(doc)
+        if sheet is None:
+            values = ask_values()
+            if values is None:
+                App.Console.PrintMessage("Create Octagon: cancelled.\n")
+                return
+            sheet = create_spreadsheet(doc, values)
+            source = "new spreadsheet '{0}'".format(sheet.Label)
+        else:
+            values = read_aliases(sheet)
+            source = "spreadsheet '{0}'".format(sheet.Label)
+
+        edge = values["side"] + values["tolerance"]
+        if edge <= 0:
+            raise MacroError(
+                "side + tolerance = {0:.4f} mm. The edge length must be "
+                "greater than zero.".format(edge)
+            )
+
+        plane = ask_plane()
+        if plane is None:
+            App.Console.PrintMessage("Create Octagon: cancelled.\n")
+            return
+
+        obj = build_sketch(body, edge, plane, sheet)
+        doc.recompute()
+        if GUI_UP and Gui is not None:
+            Gui.SendMsgToActiveView("ViewFit")
+
+        App.Console.PrintMessage(
+            "Created sketch '{0}' in body '{1}' on the {2} plane: side "
+            "{3:.4f} mm (side {4:.4f} + tolerance {5:.4f} from {6}), centred "
+            "on the origin.\n".format(
+                obj.Label,
+                body.Label,
+                plane,
+                edge,
+                values["side"],
+                values["tolerance"],
+                source,
+            )
+        )
+    except MacroError as exc:
+        report(str(exc))
+
+
+main()

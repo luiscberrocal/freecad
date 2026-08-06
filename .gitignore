@@ -1,2 +1,4 @@
 /.idea
 *.FCBak
+__pycache__/
+*.py[cod]

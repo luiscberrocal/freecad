@@ -6,6 +6,7 @@ import click
 
 from freecad_tools import __version__
 from freecad_tools.commands.clean_bak import clean_bak
+from freecad_tools.commands.new_model import new_model
 
 
 @click.group()
@@ -15,6 +16,7 @@ def cli() -> None:
 
 
 cli.add_command(clean_bak)
+cli.add_command(new_model)
 
 
 if __name__ == "__main__":

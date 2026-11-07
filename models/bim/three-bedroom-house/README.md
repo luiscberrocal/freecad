@@ -38,7 +38,8 @@ This overwrites the generated files, so changes made by hand in the `.FCStd` are
 
 - `three-bedroom-house.FCStd`: native BIM model
 - `three-bedroom-house.ifc`: IFC4 export
-- `three-bedroom-house-plan.pdf`: floor plan, A3 at 1:50, with door and window sizes
+- `three-bedroom-house-plan.pdf`: three A3 sheets at 1:50: the floor plan with the door
+  and window table, the south and north elevations, and the east and west elevations
 - `three-bedroom-house-schedule.csv`: room, wall, door and window quantities
 
 ## Not modelled

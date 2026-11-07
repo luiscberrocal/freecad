@@ -8,7 +8,7 @@ Run with FreeCAD's own interpreter, from anywhere:
 Writes next to this file:
     three-bedroom-house.FCStd          native BIM model
     three-bedroom-house.ifc            IFC export
-    three-bedroom-house-plan.pdf       floor plan, A3 at 1:50
+    three-bedroom-house-plan.pdf       floor plan and four elevations, A3 at 1:50
     three-bedroom-house-schedule.csv   room, wall and opening quantities
 
 All lengths are millimetres. X runs east, Y runs north, Z = 0 is the finished
@@ -30,7 +30,9 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import Part  # noqa: E402
+import TechDraw  # noqa: E402
 from FreeCAD import Placement, Rotation, Vector  # noqa: E402
+from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
 from matplotlib.patches import Arc, Circle, Ellipse, Polygon, Rectangle  # noqa: E402
 
 HERE = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
@@ -445,7 +447,46 @@ def write_schedule(model, path):
         writer.writerows(schedule_rows(model))
 
 
-# --- Floor plan -------------------------------------------------------------
+# --- Drawings ---------------------------------------------------------------
+SHEET_W, SHEET_H, SCALE = 420, 297, 50  # A3 in mm, 1:50
+SHEET_COUNT = 3  # floor plan, then two sheets of elevations
+
+# name: (Spanish title, exterior wall, direction towards the viewer, rightward axis)
+ELEVATIONS = {
+    "South": ("Fachada Sur", "Wall South", Vector(0, -1, 0), Vector(1, 0, 0)),
+    "North": ("Fachada Norte", "Wall North", Vector(0, 1, 0), Vector(-1, 0, 0)),
+    "East": ("Fachada Este", "Wall East", Vector(1, 0, 0), Vector(0, 1, 0)),
+    "West": ("Fachada Oeste", "Wall West", Vector(-1, 0, 0), Vector(0, -1, 0)),
+}
+
+
+def new_sheet(ox, oy):
+    """A3 figure whose axes use model millimetres, lower-left corner at ox, oy."""
+    figure = plt.figure(figsize=(SHEET_W / 25.4, SHEET_H / 25.4))
+    ax = figure.add_axes([0, 0, 1, 1])
+    ax.set_xlim(ox, ox + SHEET_W * SCALE)
+    ax.set_ylim(oy, oy + SHEET_H * SCALE)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    return figure, ax
+
+
+def title_block(ax, x, y, subtitle, notes, sheet):
+    """Title, notes and creator; returns the y below the last line."""
+    block = [
+        ("Casa de tres dormitorios", 12, "bold"),
+        (subtitle, 9, "normal"),
+        (f"Escala 1:{SCALE} (hoja A3)", 7.5, "normal"),
+        *[(note, 7.5, "normal") for note in notes],
+        (f"Creado por {CREATOR}", 7.5, "normal"),
+        (f"Hoja {sheet} de {SHEET_COUNT}", 7.5, "normal"),
+    ]
+    for text, size, weight in block:
+        ax.text(x, y, text, fontsize=size, fontweight=weight, color="#111")
+        y -= 480 if size < 12 else 620
+    return y
+
+
 DIM_SCALE = 1.15  # size of dimension text, its offset from the line, and the ticks
 DIM_TEXT = 6.5 * DIM_SCALE
 DIM_GAP = 70 * DIM_SCALE
@@ -598,15 +639,8 @@ def opening_table(ax, x, y):
             ax.text(x + dx, y, value, fontsize=6, color="#333")
 
 
-def write_plan(model, path):
-    sheet_w, sheet_h, scale = 420, 297, 50  # A3 in mm, 1:50
-    figure = plt.figure(figsize=(sheet_w / 25.4, sheet_h / 25.4))
-    ax = figure.add_axes([0, 0, 1, 1])
-    ox, oy = -3000, -3100  # model coordinates of the sheet's lower-left corner
-    ax.set_xlim(ox, ox + sheet_w * scale)
-    ax.set_ylim(oy, oy + sheet_h * scale)
-    ax.set_aspect("equal")
-    ax.axis("off")
+def plan_sheet(model):
+    figure, ax = new_sheet(-3000, -3100)  # model coordinates of the lower-left corner
 
     ax.add_patch(
         Rectangle((-EAVE, -EAVE), LENGTH + 2 * EAVE, DEPTH + 2 * EAVE, fill=False,
@@ -663,23 +697,103 @@ def write_plan(model, path):
     ax.text(arrow_x, arrow_y + 1100, "N", ha="center", fontsize=11, fontweight="bold")
 
     total = sum(space.Area.Value for space in model["spaces"]) / 1e6
-    block = [
-        ("Casa de tres dormitorios", 12, "bold"),
-        ("Planta arquitectónica", 9, "normal"),
-        (f"Escala 1:{scale} (hoja A3)", 7.5, "normal"),
-        ("Cotas en metros; vanos: ancho × alto", 7.5, "normal"),
-        (f"Área interior {total:.1f} m²", 7.5, "normal"),
-        (f"Área de construcción {LENGTH * DEPTH / 1e6:.1f} m²", 7.5, "normal"),
-        ("Línea discontinua: techo", 7.5, "normal"),
-        (f"Creado por {CREATOR}", 7.5, "normal"),
+    notes = [
+        "Cotas en metros; vanos: ancho × alto",
+        f"Área interior {total:.1f} m²",
+        f"Área de construcción {LENGTH * DEPTH / 1e6:.1f} m²",
+        "Línea discontinua: techo",
     ]
-    y = 6900
-    for text, size, weight in block:
-        ax.text(13700, y, text, fontsize=size, fontweight=weight, color="#111")
-        y -= 480 if size < 12 else 620
+    y = title_block(ax, 13700, 6900, "Planta arquitectónica", notes, 1)
     opening_table(ax, 13700, y - 100)
-    figure.savefig(path)
-    plt.close(figure)
+    return figure
+
+
+# --- Elevations -------------------------------------------------------------
+def elevation_lines(model, view, right):
+    """Visible edges of the building seen from `view`, as (h, z) point lists.
+
+    The solids are rotated so `right` becomes X, up stays up as Y and `view`
+    points at the viewer along Z, then TechDraw removes the hidden lines.
+    """
+    walls = [wall.Shape for wall in model["walls"].values()]
+    walls = walls[0].multiFuse(walls[1:]).removeSplitter()  # no joint lines at corners
+    others = [model["slab"], *model["windows"], *model["doors"], model["roof"]]
+    shape = Part.makeCompound([walls, *(obj.Shape.copy() for obj in others)])
+    rotation = Rotation(right, Vector(0, 0, 1), view, "ZXY").inverted()
+    shape.transformShape(Placement(Vector(), rotation).toMatrix())
+    projection = TechDraw.projectEx(shape, Vector(0, 0, 1))
+    lines = []
+    for compound in (projection[0], projection[3]):  # visible hard edges and outlines
+        for edge in compound.Edges if compound else []:
+            lines.append([(v.x, v.y) for v in edge.discretize(QuasiDeflection=2)])
+    return lines
+
+
+def level_mark(ax, x, z, text):
+    """Downward triangle on a level, with its text to the left."""
+    ax.add_patch(Polygon([(x, z), (x - 90, z + 150), (x + 90, z + 150)], closed=True,
+                         fc="#222", ec="#222", lw=0.4))  # fmt: skip
+    ax.plot([x - 250, x + 450], [z, z], color="#222", lw=0.4)
+    ax.text(x - 200, z + 90, text, ha="right", va="center", fontsize=7, color="#222")
+
+
+def draw_elevation(ax, model, key, ox, oy):
+    """One elevation, with the outer wall corner on its left at floor level at ox, oy."""
+    title, wall_name, view, right = ELEVATIONS[key]
+    h0 = min(Vector(x, y, 0).dot(right) for x in (0, LENGTH) for y in (0, DEPTH))
+    width = LENGTH if is_along_x(wall_name) else DEPTH
+    for points in elevation_lines(model, view, right):
+        xs, zs = zip(*points)
+        ax.plot([ox + h - h0 for h in xs], [oy + z for z in zs], color="#222", lw=0.45)
+
+    ground = oy - SLAB_T
+    ax.plot([ox - EAVE - 900, ox + width + EAVE + 900], [ground, ground], color="#111", lw=1.6)
+
+    mark_x = ox - EAVE - 700
+    ridge = model["roof"].Shape.BoundBox.ZMax
+    for z, text in ((0, "N.P.T. ±0.00"), (WALL_H, f"+{metres(WALL_H)}"),
+                    (ridge, f"Cumbrera +{metres(ridge)}")):  # fmt: skip
+        level_mark(ax, mark_x, oy + z, text)
+
+    openings = [(name, host, centre, height + sill, "#2a6fa8")
+                for name, (_, host, centre, _, height, sill) in WINDOWS.items()]
+    openings += [(name, host, centre, height, "#8a4b1f")
+                 for name, (host, centre, _, height, _, _) in DOORS.items()]  # fmt: skip
+    (x0, y0), _, _ = WALLS[wall_name]
+    for name, host, centre, head, colour in openings:
+        if host != wall_name:
+            continue
+        point = Vector(centre, y0, 0) if is_along_x(host) else Vector(x0, centre, 0)
+        ax.text(ox + point.dot(right) - h0, oy + head + 200, name.split()[0], ha="center",
+                va="center", fontsize=6.5, color=colour)  # fmt: skip
+
+    dimension(ax, (ox, ground), (ox + width, ground), -700)
+    ax.text(ox + width / 2, ground - 1450, title, ha="center", va="center", fontsize=10,
+            fontweight="bold", color="#111")  # fmt: skip
+    ax.text(ox + width / 2, ground - 1850, f"Escala 1:{SCALE}", ha="center", va="center",
+            fontsize=7, color="#444")  # fmt: skip
+
+
+def elevation_sheet(model, upper, lower, sheet):
+    figure, ax = new_sheet(0, 0)
+    draw_elevation(ax, model, upper, 2900, 9700)
+    draw_elevation(ax, model, lower, 2900, 2500)
+    notes = ["Niveles en metros", "N.P.T.: nivel de piso terminado",
+             "Marcas de vanos según el cuadro de la hoja 1"]  # fmt: skip
+    title_block(ax, 16700, 6900, "Fachadas", notes, sheet)
+    return figure
+
+
+def write_drawings(model, path):
+    """Floor plan, then south and north, then east and west elevations."""
+    with PdfPages(path) as pdf:
+        for figure in (
+            plan_sheet(model),
+            elevation_sheet(model, "South", "North", 2),
+            elevation_sheet(model, "East", "West", 3),
+        ):
+            pdf.savefig(figure)
+            plt.close(figure)
 
 
 def write_ifc(model, path):
@@ -716,7 +830,7 @@ def main():
     doc.saveAs(str(HERE / f"{SLUG}.FCStd"))
     write_ifc(model, HERE / f"{SLUG}.ifc")
     write_schedule(model, HERE / f"{SLUG}-schedule.csv")
-    write_plan(model, HERE / f"{SLUG}-plan.pdf")
+    write_drawings(model, HERE / f"{SLUG}-plan.pdf")
     print("DONE")
     return doc, model
 

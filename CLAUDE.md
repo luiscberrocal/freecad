@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 A personal library of FreeCAD models, mostly for 3D printing, plus a small CLI for housekeeping. Most of the repo is binary assets (`.FCStd` sources, `.3mf` print exports). There are two separate Python environments, and they do not share dependencies:
 
 - **`src/freecad_tools/`**: a click CLI, run through `uv` (Python 3.12+). It does not import FreeCAD.
-- **Model build scripts** such as `models/bim/three-bedroom-house/build_house.py`: run by FreeCAD's bundled interpreter, not by `uv` or `.venv`. `FreeCAD`, `Arch`, `Draft`, `Part`, `ifcopenshell` and `matplotlib` all come from the FreeCAD app (currently 1.1.1).
+- **Model build scripts** such as `models/bim/three-bedroom-house/build_house.py`: run by FreeCAD's bundled interpreter, not by `uv` or `.venv`. `FreeCAD`, `Arch`, `Draft`, `Part`, `TechDraw`, `ifcopenshell` and `matplotlib` all come from the FreeCAD app (currently 1.1.1).
 
 ## Commands
 
@@ -53,5 +53,6 @@ Things that are easy to break:
 - **Sliding doors**: a `DOORS` hinge end of 0 means a sliding door, which uses the window preset with solid panels. Its swing side is the closet side.
 - **Language**: the plan PDF is in Spanish (room names and title block). Model labels, the IFC and the schedule are in English.
 - **The plan is not fully model-driven**: wall cuts and room areas come from the real solids. The roof outline and dimension lines are drawn from the constants, so they follow a changed value, but new walls get no dimensions unless added to `write_plan`. The sheet origin, north arrow and title block position are literal numbers there, so a larger footprint can run into them.
+- **Elevations**: sheets 2 and 3 of the plan PDF are the four facades. Their lines come from the real solids (slab, walls, openings, roof) through `TechDraw.projectEx` hidden-line removal, so they follow the model. Level marks use `WALL_H` and the roof's height, opening tags are placed from `WINDOWS` and `DOORS`, and the positions on the sheet are literal numbers in `elevation_sheet`. Each view is set in `ELEVATIONS`.
 - **Opening names carry meaning**: the first word of a `WINDOWS` or `DOORS` key (`W02`) is a type tag printed on the plan, shared by every opening of the same kind, size and sill (`W02 Bedroom 2`, `W02 Dining`). The table on the plan lists one row per tag with a count. `opening_types` raises if a tag covers two different sizes or one size has two tags, so pick the existing tag when adding a matching opening. Full names must stay unique because `write_ifc` and `schedule_rows` look openings up by name.
 - **`write_ifc` patches FreeCAD's exporter output**: it adds the missing `IfcRelFillsElement` links, matching each door or window to its opening by name, converts `OverallWidth` and `OverallHeight` from millimetres to metres, and sets the operation type of sliding doors. Keep these repairs when changing the export.

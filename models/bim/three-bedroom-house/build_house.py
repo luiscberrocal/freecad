@@ -145,18 +145,21 @@ PLAN_FIXTURE_NAMES = {"Shower": "Ducha", "Toilet": "Inodoro"}
 # Eastward shift of a room's plan label, to clear the door labels around it
 PLAN_LABEL_SHIFT = {"Hall": 1700}
 
+# The first word of a WINDOWS or DOORS name is its type tag: openings of the
+# same kind and size share one tag, and check_opening_types enforces that.
+
 # name: (preset, host wall, centre along wall axis, width, height, sill)
 WINDOWS = {
     "W01 Lounge": ("Sliding 2-pane", "Wall South", 3500, 2000, 1500, 600),
     "W02 Bedroom 2": ("Sliding 2-pane", "Wall South", 7050, 1500, 1200, 900),
-    "W03 Bedroom 3": ("Sliding 2-pane", "Wall South", 10300, 1500, 1200, 900),
-    "W04 Dining": ("Sliding 2-pane", "Wall West", 2800, 1500, 1200, 900),
-    "W05 Kitchen": ("Sliding 2-pane", "Wall North", 2700, 1500, 1000, 1100),
-    "W06 Bathroom": ("Awning", "Wall North", 6500, 600, 600, 1600),
-    "W07 Bedroom 1 North": ("Sliding 2-pane", "Wall North", 9900, 1500, 1200, 900),
-    "W08 Bedroom 1 East": ("Sliding 2-pane", "Wall East", 6600, 1200, 1200, 900),
-    "W09 Hall": ("Fixed", "Wall East", 4250, 600, 1200, 900),
-    "W10 Bedroom 3 East": ("Sliding 2-pane", "Wall East", 1900, 1200, 1200, 900),
+    "W02 Bedroom 3": ("Sliding 2-pane", "Wall South", 10300, 1500, 1200, 900),
+    "W02 Dining": ("Sliding 2-pane", "Wall West", 2800, 1500, 1200, 900),
+    "W03 Kitchen": ("Sliding 2-pane", "Wall North", 2700, 1500, 1000, 1100),
+    "W04 Bathroom": ("Awning", "Wall North", 6500, 600, 600, 1600),
+    "W02 Bedroom 1 North": ("Sliding 2-pane", "Wall North", 9900, 1500, 1200, 900),
+    "W05 Bedroom 1 East": ("Sliding 2-pane", "Wall East", 6600, 1200, 1200, 900),
+    "W06 Hall": ("Fixed", "Wall East", 4250, 600, 1200, 900),
+    "W05 Bedroom 3 East": ("Sliding 2-pane", "Wall East", 1900, 1200, 1200, 900),
 }
 
 # name: (host wall, centre along wall axis, width, height, hinge end, swing side)
@@ -168,12 +171,12 @@ DOORS = {
     "D01 Main entry": ("Wall South", 1200, 1000, 2100, -1, 1),
     "D02 Kitchen": ("Wall West", 6100, 900, 2100, 1, 1),
     "D03 Bathroom": ("Wall Hall North", 6650, 800, 2100, -1, 1),
-    "D04 Bedroom 1": ("Wall Hall North", 8500, 900, 2100, -1, 1),
-    "D05 Bedroom 2": ("Wall Hall South", 6000, 900, 2100, -1, -1),
-    "D06 Bedroom 3": ("Wall Hall South", 9300, 900, 2100, 1, -1),
-    "D07 Closet 1": ("Wall Closet 1 Front", (CLOSET_1_X + I2 + LENGTH - E) / 2, 2400, 2100, 0, -1),
-    "D08 Closet 2": ("Wall Closet 2 Front", (CLOSET_2_X + I2 + BED_SPLIT_X - I2) / 2, 1800, 2100, 0, 1),
-    "D09 Closet 3": ("Wall Closet 3 Front", (CLOSET_3_X + I2 + LENGTH - E) / 2, 1800, 2100, 0, 1),
+    "D02 Bedroom 1": ("Wall Hall North", 8500, 900, 2100, -1, 1),
+    "D02 Bedroom 2": ("Wall Hall South", 6000, 900, 2100, -1, -1),
+    "D02 Bedroom 3": ("Wall Hall South", 9300, 900, 2100, 1, -1),
+    "D04 Closet 1": ("Wall Closet 1 Front", (CLOSET_1_X + I2 + LENGTH - E) / 2, 2400, 2100, 0, -1),
+    "D05 Closet 2": ("Wall Closet 2 Front", (CLOSET_2_X + I2 + BED_SPLIT_X - I2) / 2, 1800, 2100, 0, 1),
+    "D05 Closet 3": ("Wall Closet 3 Front", (CLOSET_3_X + I2 + LENGTH - E) / 2, 1800, 2100, 0, 1),
 }
 
 MATERIALS = {
@@ -185,6 +188,28 @@ MATERIALS = {
     "ceramic": ("Vitreous china", (0.96, 0.96, 0.94)),
     "glass": ("Tempered glass", (0.75, 0.88, 0.92)),
 }
+
+
+# --- Opening types ----------------------------------------------------------
+def opening_types():
+    """Tag, kind, width, height, sill and count of each door and window type."""
+    specs = [(name, (preset, width, height, sill))
+             for name, (preset, _, _, width, height, sill) in WINDOWS.items()]
+    specs += [(name, ("Sliding" if not hinge else "Hinged", width, height, 0))
+              for name, (_, _, width, height, hinge, _) in DOORS.items()]  # fmt: skip
+    types = {}
+    for name, spec in specs:
+        tag = name.split()[0]
+        if tag in types and types[tag][0] != spec:
+            raise ValueError(f"{name}: tag {tag} is already used for {types[tag][0]}")
+        types[tag] = (spec, types.get(tag, (spec, 0))[1] + 1)
+    groups = {}
+    for tag, (spec, _) in types.items():
+        groups.setdefault((tag[0], spec), []).append(tag)
+    clashes = [tags for tags in groups.values() if len(tags) > 1]
+    if clashes:
+        raise ValueError(f"same type under several tags: {clashes}")
+    return [(tag, *spec, count) for tag, (spec, count) in types.items()]
 
 
 # --- Model ------------------------------------------------------------------
@@ -560,17 +585,15 @@ def opening_label(ax, wall_name, centre, side, name, width, height, colour):
 
 def opening_table(ax, x, y):
     """Table of every door and window, the only place sills are shown."""
-    columns = (("Marca", 0), ("Ancho", 1000), ("Alto", 1900), ("Antepecho", 2800))
-    rows = [(name, width, height, sill) for name, (_, _, _, width, height, sill) in WINDOWS.items()]
-    rows += [(name, width, height, 0) for name, (_, _, width, height, _, _) in DOORS.items()]
+    columns = (("Marca", 0), ("Cant.", 800), ("Ancho", 1600), ("Alto", 2400), ("Antepecho", 3200))
     ax.text(x, y, "Cuadro de puertas y ventanas (m)", fontsize=7.5, fontweight="bold", color="#111")
     y -= 260
     for title, dx in columns:
         ax.text(x + dx, y, title, fontsize=6, fontweight="bold", color="#111")
-    ax.plot([x, x + 3700], [y - 70, y - 70], color="#333", lw=0.4)
-    for name, width, height, sill in rows:
+    ax.plot([x, x + 4100], [y - 70, y - 70], color="#333", lw=0.4)
+    for tag, _, width, height, sill, count in sorted(opening_types(), key=lambda t: t[0][0] != "W"):
         y -= 215
-        values = (name.split()[0], metres(width), metres(height), metres(sill) if sill else "–")
+        values = (tag, str(count), metres(width), metres(height), metres(sill) if sill else "–")
         for value, (_, dx) in zip(values, columns):
             ax.text(x + dx, y, value, fontsize=6, color="#333")
 
@@ -683,6 +706,7 @@ def write_ifc(model, path):
 
 
 def main():
+    opening_types()  # fail early on inconsistent door and window tags
     doc = FreeCAD.newDocument("ThreeBedroomHouse")
     doc.CreatedBy = CREATOR
     model = build(doc)

@@ -351,7 +351,7 @@ def dimension(ax, p0, p1, offset, text=None):
         label_x = (a[0] + b[0]) / 2 - 70
     else:
         label_y += 70
-    ax.text(label_x, label_y, text or f"{length:.0f}", ha="center", va="center",
+    ax.text(label_x, label_y, text or f"{length / 1000:.2f}", ha="center", va="center",
             rotation=rotation, fontsize=6.5, color="#333")  # fmt: skip
 
 
@@ -454,13 +454,14 @@ def write_plan(model, path):
 
     total = sum(space.Area.Value for space in model["spaces"]) / 1e6
     block = [
-        ("Three Bedroom House", 12, "bold"),
-        ("Ground floor plan", 9, "normal"),
-        ("Scale 1:50 on A3   Dimensions in mm", 7.5, "normal"),
-        (f"Internal floor area {total:.1f} m²", 7.5, "normal"),
-        (f"Gross footprint {LENGTH * DEPTH / 1e6:.1f} m²", 7.5, "normal"),
-        ("Dashed outline: roof above", 7.5, "normal"),
-        (f"Created by {CREATOR}", 7.5, "normal"),
+        ("Casa de tres dormitorios", 12, "bold"),
+        ("Planta arquitectónica", 9, "normal"),
+        (f"Escala 1:{scale} (hoja A3)", 7.5, "normal"),
+        ("Cotas en metros", 7.5, "normal"),
+        (f"Área interior {total:.1f} m²", 7.5, "normal"),
+        (f"Área de construcción {LENGTH * DEPTH / 1e6:.1f} m²", 7.5, "normal"),
+        ("Línea discontinua: techo", 7.5, "normal"),
+        (f"Creado por {CREATOR}", 7.5, "normal"),
     ]
     y = 6900
     for text, size, weight in block:

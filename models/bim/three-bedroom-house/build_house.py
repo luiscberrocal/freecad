@@ -35,7 +35,7 @@ from matplotlib.patches import Arc, Circle, Ellipse, Polygon, Rectangle  # noqa:
 
 HERE = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
 SLUG = "three-bedroom-house"
-CREATOR = "Sebastian"  # shown on the plan and stored in the FCStd and IFC metadata
+CREATOR = "Sebastian Mudarra"  # shown on the plan and stored in the FCStd and IFC metadata
 
 # --- Design parameters ------------------------------------------------------
 LENGTH = 12000  # outer east-west size

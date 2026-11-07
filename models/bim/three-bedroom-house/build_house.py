@@ -421,6 +421,12 @@ def write_schedule(model, path):
 
 
 # --- Floor plan -------------------------------------------------------------
+DIM_SCALE = 1.15  # size of dimension text, its offset from the line, and the ticks
+DIM_TEXT = 6.5 * DIM_SCALE
+DIM_GAP = 70 * DIM_SCALE
+DIM_TICK = 40 * DIM_SCALE
+
+
 def wall_cut_faces(model, z=1200):
     """Fused section through the real wall solids, openings included."""
     faces = []
@@ -444,17 +450,18 @@ def dimension(ax, p0, p1, offset, text=None):
     for p, q in ((p0, a), (p1, b)):
         ax.plot([p[0] + nx * 0.2, q[0] + nx * 0.1], [p[1] + ny * 0.2, q[1] + ny * 0.1],
                 color="#333", lw=0.3)  # fmt: skip
-        ax.plot([q[0] - 40, q[0] + 40], [q[1] - 40, q[1] + 40], color="#333", lw=0.7)
+        ax.plot([q[0] - DIM_TICK, q[0] + DIM_TICK], [q[1] - DIM_TICK, q[1] + DIM_TICK],
+                color="#333", lw=0.7)  # fmt: skip
     rotation = 90 if abs(dy) > abs(dx) else 0
-    side = 70 if offset > 0 else -70
+    side = DIM_GAP if offset > 0 else -DIM_GAP
     label_x = (a[0] + b[0]) / 2 + (side * -1 if rotation and offset > 0 else 0)
     label_y = (a[1] + b[1]) / 2
     if rotation:
-        label_x = (a[0] + b[0]) / 2 - 70
+        label_x = (a[0] + b[0]) / 2 - DIM_GAP
     else:
-        label_y += 70
+        label_y += DIM_GAP
     ax.text(label_x, label_y, text or f"{length / 1000:.2f}", ha="center", va="center",
-            rotation=rotation, fontsize=6.5, color="#333")  # fmt: skip
+            rotation=rotation, fontsize=DIM_TEXT, color="#333")  # fmt: skip
 
 
 def draw_window(ax, wall_name, centre, width):

@@ -49,8 +49,9 @@ Things that are easy to break:
 - **Entry point**: `main()` is called at module level on purpose. Under `freecadcmd`, `__name__` is the script's module name, not `"__main__"`, so an `if __name__ == "__main__"` guard would never run. Importing the file also runs the whole build.
 - **Walls must be axis-aligned**: `is_along_x`, `opening_placement`, `draw_window` and `draw_door` all assume this.
 - **Opening positions are absolute**: the `centre` value in `WINDOWS` and `DOORS` is a global X or Y coordinate, not an offset from the wall's start.
-- **New rooms** need an entry in `PLAN_ROOM_NAMES` as well as `ROOMS`, or `write_plan` raises `KeyError`.
+- **New rooms** need an entry in `PLAN_ROOM_NAMES` as well as `ROOMS`, or `write_plan` raises `KeyError`. A room that gives up floor to a closet also needs an entry in `ROOM_CUTOUTS`, or the two spaces overlap.
+- **Sliding doors**: a `DOORS` hinge end of 0 means a sliding door, which uses the window preset with solid panels. Its swing side is the closet side.
 - **Language**: the plan PDF is in Spanish (room names and title block). Model labels, the IFC and the schedule are in English.
 - **The plan is not fully model-driven**: wall cuts and room areas come from the real solids. The roof outline and dimension lines are drawn from the constants, so they follow a changed value, but new walls get no dimensions unless added to `write_plan`. The sheet origin, north arrow and title block position are literal numbers there, so a larger footprint can run into them.
-- **Opening names carry meaning**: the first word of a `WINDOWS` key (`W01`) is the tag printed on the plan, and names must stay unique because `write_ifc` and `schedule_rows` look openings up by name.
-- **`write_ifc` patches FreeCAD's exporter output**: it adds the missing `IfcRelFillsElement` links, matching each door or window to its opening by name, and converts `OverallWidth` and `OverallHeight` from millimetres to metres. Keep these repairs when changing the export.
+- **Opening names carry meaning**: the first word of a `WINDOWS` or `DOORS` key (`W01`) is the tag printed on the plan, and names must stay unique because `write_ifc` and `schedule_rows` look openings up by name.
+- **`write_ifc` patches FreeCAD's exporter output**: it adds the missing `IfcRelFillsElement` links, matching each door or window to its opening by name, converts `OverallWidth` and `OverallHeight` from millimetres to metres, and sets the operation type of sliding doors. Keep these repairs when changing the export.

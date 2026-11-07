@@ -57,9 +57,15 @@ HALL_N_Y = 4800  # north hall wall
 BED_SPLIT_X = 8700  # wall between bedrooms 2 and 3
 BATH_SPLIT_X = 7900  # wall between bathroom and bedroom 1
 KITCHEN_S_Y = 5350  # notional kitchen / dining boundary (no wall)
+CLOSET_D = 600  # clear closet depth
+CLOSET_1_X = 9050  # closet side walls, just past each bedroom door
+CLOSET_2_X = 6550
+CLOSET_3_X = 9850
 
 E = EXT_T
 I2 = INT_T / 2
+CLOSET_N_Y = HALL_N_Y + CLOSET_D + INT_T  # closet front wall, bedroom 1
+CLOSET_S_Y = HALL_S_Y - CLOSET_D - INT_T  # closet front wall, bedrooms 2 and 3
 
 # name: (start, end, thickness), start and end on the wall centreline
 WALLS = {
@@ -73,6 +79,12 @@ WALLS = {
     "Wall Hall North": ((SPINE_X + I2, HALL_N_Y), (LENGTH - E, HALL_N_Y), INT_T),
     "Wall Bedrooms": ((BED_SPLIT_X, E), (BED_SPLIT_X, HALL_S_Y - I2), INT_T),
     "Wall Bathroom": ((BATH_SPLIT_X, HALL_N_Y + I2), (BATH_SPLIT_X, DEPTH - E), INT_T),
+    "Wall Closet 1 Front": ((CLOSET_1_X - I2, CLOSET_N_Y), (LENGTH - E, CLOSET_N_Y), INT_T),
+    "Wall Closet 1 Side": ((CLOSET_1_X, HALL_N_Y + I2), (CLOSET_1_X, CLOSET_N_Y - I2), INT_T),
+    "Wall Closet 2 Front": ((CLOSET_2_X - I2, CLOSET_S_Y), (BED_SPLIT_X - I2, CLOSET_S_Y), INT_T),
+    "Wall Closet 2 Side": ((CLOSET_2_X, CLOSET_S_Y + I2), (CLOSET_2_X, HALL_S_Y - I2), INT_T),
+    "Wall Closet 3 Front": ((CLOSET_3_X - I2, CLOSET_S_Y), (LENGTH - E, CLOSET_S_Y), INT_T),
+    "Wall Closet 3 Side": ((CLOSET_3_X, CLOSET_S_Y + I2), (CLOSET_3_X, HALL_S_Y - I2), INT_T),
 }
 
 # name: (x0, y0, x1, y1, FreeCAD space type)
@@ -84,6 +96,16 @@ ROOMS = {
     "Bedroom 1": (BATH_SPLIT_X + I2, HALL_N_Y + I2, LENGTH - E, DEPTH - E, "Dormitory - Living Quarters"),
     "Bedroom 2": (SPINE_X + I2, E, BED_SPLIT_X - I2, HALL_S_Y - I2, "Dormitory - Living Quarters"),
     "Bedroom 3": (BED_SPLIT_X + I2, E, LENGTH - E, HALL_S_Y - I2, "Dormitory - Living Quarters"),
+    "Closet 1": (CLOSET_1_X + I2, HALL_N_Y + I2, LENGTH - E, CLOSET_N_Y - I2, "Active Storage"),
+    "Closet 2": (CLOSET_2_X + I2, CLOSET_S_Y + I2, BED_SPLIT_X - I2, HALL_S_Y - I2, "Active Storage"),
+    "Closet 3": (CLOSET_3_X + I2, CLOSET_S_Y + I2, LENGTH - E, HALL_S_Y - I2, "Active Storage"),
+}
+
+# name: (x0, y0, x1, y1), the part of a room taken up by a closet and its walls
+ROOM_CUTOUTS = {
+    "Bedroom 1": (CLOSET_1_X - I2, HALL_N_Y + I2, LENGTH - E, CLOSET_N_Y + I2),
+    "Bedroom 2": (CLOSET_2_X - I2, CLOSET_S_Y - I2, BED_SPLIT_X - I2, HALL_S_Y - I2),
+    "Bedroom 3": (CLOSET_3_X - I2, CLOSET_S_Y - I2, LENGTH - E, HALL_S_Y - I2),
 }
 
 # Room names printed on the floor plan
@@ -95,7 +117,13 @@ PLAN_ROOM_NAMES = {
     "Bedroom 1": "Dormitorio 1",
     "Bedroom 2": "Dormitorio 2",
     "Bedroom 3": "Dormitorio 3",
+    "Closet 1": "Clóset 1",
+    "Closet 2": "Clóset 2",
+    "Closet 3": "Clóset 3",
 }
+
+# Eastward shift of a room's plan label, to clear the door labels around it
+PLAN_LABEL_SHIFT = {"Hall": 1700}
 
 # name: (preset, host wall, centre along wall axis, width, height, sill)
 WINDOWS = {
@@ -113,7 +141,9 @@ WINDOWS = {
 
 # name: (host wall, centre along wall axis, width, height, hinge end, swing side)
 # hinge end -1/+1 is the low/high end along the wall axis; swing side -1/+1 is
-# the low/high side across it. Swing data is used for the plan symbol.
+# the low/high side across it. Swing data is used for the plan symbol. Hinge end
+# 0 is a sliding door, and its swing side is the side the closet is on. Door tags
+# and sizes are printed on the side opposite the swing.
 DOORS = {
     "D01 Main entry": ("Wall South", 1200, 1000, 2100, -1, 1),
     "D02 Kitchen": ("Wall West", 6100, 900, 2100, 1, 1),
@@ -121,6 +151,9 @@ DOORS = {
     "D04 Bedroom 1": ("Wall Hall North", 8500, 900, 2100, -1, 1),
     "D05 Bedroom 2": ("Wall Hall South", 6000, 900, 2100, -1, -1),
     "D06 Bedroom 3": ("Wall Hall South", 9300, 900, 2100, 1, -1),
+    "D07 Closet 1": ("Wall Closet 1 Front", (CLOSET_1_X + I2 + LENGTH - E) / 2, 2400, 2100, 0, -1),
+    "D08 Closet 2": ("Wall Closet 2 Front", (CLOSET_2_X + I2 + BED_SPLIT_X - I2) / 2, 1800, 2100, 0, 1),
+    "D09 Closet 3": ("Wall Closet 3 Front", (CLOSET_3_X + I2 + LENGTH - E) / 2, 1800, 2100, 0, 1),
 }
 
 MATERIALS = {
@@ -202,12 +235,15 @@ def build(doc):
             )
         )
     doors = []
-    for name, (host, centre, width, height, _, _) in DOORS.items():
-        doors.append(
-            add_opening(
-                "Simple door", name, walls[host], host, centre, width, height, 0, materials["door"]
-            )
+    for name, (host, centre, width, height, hinge, _) in DOORS.items():
+        preset = "Simple door" if hinge else "Sliding 2-pane"
+        door = add_opening(
+            preset, name, walls[host], host, centre, width, height, 0, materials["door"]
         )
+        if not hinge:  # the sliding preset is a glazed window
+            door.IfcType = "Door"
+            door.WindowParts = [p.replace("Glass panel", "Solid panel") for p in door.WindowParts]
+        doors.append(door)
     doc.recompute()
 
     slab_base = Draft.make_rectangle(LENGTH, DEPTH, Placement(Vector(0, 0, -SLAB_T), Rotation()))
@@ -233,10 +269,13 @@ def build(doc):
     volumes = doc.addObject("App::DocumentObjectGroup", "RoomVolumes")
     volumes.Label = "Room volumes"
     for name, (x0, y0, x1, y1, space_type) in ROOMS.items():
-        box = doc.addObject("Part::Box", "RoomVolume")
+        shape = Part.makeBox(x1 - x0, y1 - y0, WALL_H, Vector(x0, y0, 0))
+        if name in ROOM_CUTOUTS:
+            cx0, cy0, cx1, cy1 = ROOM_CUTOUTS[name]
+            shape = shape.cut(Part.makeBox(cx1 - cx0, cy1 - cy0, WALL_H, Vector(cx0, cy0, 0)))
+        box = doc.addObject("Part::Feature", "RoomVolume")
         box.Label = f"{name} volume"
-        box.Length, box.Width, box.Height = x1 - x0, y1 - y0, WALL_H
-        box.Placement = Placement(Vector(x0, y0, 0), Rotation())
+        box.Shape = shape
         volumes.addObject(box)
         space = Arch.makeSpace(box)
         space.Label = name
@@ -368,7 +407,23 @@ def draw_window(ax, wall_name, centre, width):
     ax.plot(*glass, color="#2a6fa8", lw=1.1)
 
 
+def draw_sliding_door(ax, wall_name, centre, width):
+    """Two overlapping leaves, one each side of the wall's centre plane."""
+    (x0, y0), _, _ = WALLS[wall_name]
+    for start, end, offset in (
+        (centre - width / 2, centre + width * 0.05, -20),
+        (centre - width * 0.05, centre + width / 2, 20),
+    ):
+        if is_along_x(wall_name):
+            ax.plot([start, end], [y0 + offset, y0 + offset], color="#222", lw=0.8)
+        else:
+            ax.plot([x0 + offset, x0 + offset], [start, end], color="#222", lw=0.8)
+
+
 def draw_door(ax, wall_name, centre, width, hinge, swing):
+    if not hinge:
+        draw_sliding_door(ax, wall_name, centre, width)
+        return
     (x0, y0), _, thickness = WALLS[wall_name]
     half = thickness / 2 * swing
     if is_along_x(wall_name):
@@ -385,6 +440,39 @@ def draw_door(ax, wall_name, centre, width, hinge, swing):
         Arc(hinge_point, 2 * width, 2 * width, theta1=start, theta2=start + 90,
             color="#222", lw=0.4)
     )  # fmt: skip
+
+
+def metres(value):
+    return f"{value / 1000:.2f}"
+
+
+def opening_label(ax, wall_name, centre, side, name, width, height, colour):
+    """Tag and width x height, beside an opening on the low (-1) or high (+1) side."""
+    (x0, y0), _, thickness = WALLS[wall_name]
+    text = f"{name.split()[0]}  {metres(width)} × {metres(height)}"
+    offset = side * (thickness / 2 + 200)
+    if is_along_x(wall_name):
+        ax.text(centre, y0 + offset, text, ha="center", va="center", fontsize=6, color=colour)
+    else:
+        ax.text(x0 + offset, centre, text, ha="center", va="center", fontsize=6, color=colour,
+                rotation=90)  # fmt: skip
+
+
+def opening_table(ax, x, y):
+    """Table of every door and window, the only place sills are shown."""
+    columns = (("Marca", 0), ("Ancho", 1000), ("Alto", 1900), ("Antepecho", 2800))
+    rows = [(name, width, height, sill) for name, (_, _, _, width, height, sill) in WINDOWS.items()]
+    rows += [(name, width, height, 0) for name, (_, _, width, height, _, _) in DOORS.items()]
+    ax.text(x, y, "Cuadro de puertas y ventanas (m)", fontsize=7.5, fontweight="bold", color="#111")
+    y -= 260
+    for title, dx in columns:
+        ax.text(x + dx, y, title, fontsize=6, fontweight="bold", color="#111")
+    ax.plot([x, x + 3700], [y - 70, y - 70], color="#333", lw=0.4)
+    for name, width, height, sill in rows:
+        y -= 215
+        values = (name.split()[0], metres(width), metres(height), metres(sill) if sill else "–")
+        for value, (_, dx) in zip(values, columns):
+            ax.text(x + dx, y, value, fontsize=6, color="#333")
 
 
 def write_plan(model, path):
@@ -415,25 +503,21 @@ def write_plan(model, path):
     for face in wall_cut_faces(model):
         ax.add_patch(Polygon(wire_xy(face.OuterWire), closed=True, fc="#3a3a3a", ec="#111", lw=0.6))
 
-    for name, (_, host, centre, width, _, _) in WINDOWS.items():
+    for name, (_, host, centre, width, height, _) in WINDOWS.items():
         draw_window(ax, host, centre, width)
-        tag = name.split()[0]
         (x0, y0), _, _ = WALLS[host]
-        if is_along_x(host):
-            outside = -280 if y0 < DEPTH / 2 else 280
-            ax.text(centre, y0 + outside, tag, ha="center", va="center", fontsize=6, color="#2a6fa8")
-        else:
-            outside = -280 if x0 < LENGTH / 2 else 280
-            ax.text(x0 + outside, centre, tag, ha="center", va="center", fontsize=6,
-                    color="#2a6fa8", rotation=90)  # fmt: skip
-    for name, (host, centre, width, _, hinge, swing) in DOORS.items():
+        low_side = y0 < DEPTH / 2 if is_along_x(host) else x0 < LENGTH / 2
+        opening_label(ax, host, centre, -1 if low_side else 1, name, width, height, "#2a6fa8")
+    for name, (host, centre, width, height, hinge, swing) in DOORS.items():
         draw_door(ax, host, centre, width, hinge, swing)
+        opening_label(ax, host, centre, -swing, name, width, height, "#8a4b1f")
 
     for space in model["spaces"]:
-        bbox = space.Shape.BoundBox
-        ax.text(bbox.Center.x, bbox.Center.y + 130, PLAN_ROOM_NAMES[space.Label], ha="center", va="center",
+        centre = space.Shape.CenterOfMass  # bedrooms are L-shaped
+        label_x = centre.x + PLAN_LABEL_SHIFT.get(space.Label, 0)
+        ax.text(label_x, centre.y + 130, PLAN_ROOM_NAMES[space.Label], ha="center", va="center",
                 fontsize=9, fontweight="bold", color="#111")  # fmt: skip
-        ax.text(bbox.Center.x, bbox.Center.y - 170, f"{space.Area.Value / 1e6:.1f} m²",
+        ax.text(label_x, centre.y - 170, f"{space.Area.Value / 1e6:.1f} m²",
                 ha="center", va="center", fontsize=7.5, color="#444")  # fmt: skip
 
     ax.plot([E, SPINE_X - I2], [KITCHEN_S_Y, KITCHEN_S_Y], color="#999", lw=0.4, ls=(0, (3, 3)))
@@ -457,7 +541,7 @@ def write_plan(model, path):
         ("Casa de tres dormitorios", 12, "bold"),
         ("Planta arquitectónica", 9, "normal"),
         (f"Escala 1:{scale} (hoja A3)", 7.5, "normal"),
-        ("Cotas en metros", 7.5, "normal"),
+        ("Cotas en metros; vanos: ancho × alto", 7.5, "normal"),
         (f"Área interior {total:.1f} m²", 7.5, "normal"),
         (f"Área de construcción {LENGTH * DEPTH / 1e6:.1f} m²", 7.5, "normal"),
         ("Línea discontinua: techo", 7.5, "normal"),
@@ -467,16 +551,18 @@ def write_plan(model, path):
     for text, size, weight in block:
         ax.text(13700, y, text, fontsize=size, fontweight=weight, color="#111")
         y -= 480 if size < 12 else 620
+    opening_table(ax, 13700, y - 100)
     figure.savefig(path)
     plt.close(figure)
 
 
 def write_ifc(model, path):
-    """Export IFC, then repair two gaps in FreeCAD's exporter.
+    """Export IFC, then repair three gaps in FreeCAD's exporter.
 
     It creates openings but no IfcRelFillsElement, so each door and window is
     linked to its opening here. It also writes OverallWidth and OverallHeight
-    in millimetres although the file's length unit is the metre.
+    in millimetres although the file's length unit is the metre. And it marks
+    every door as single swing, so sliding doors are corrected.
     """
     exportIFC.export([model["project"]], str(path))
     ifc = ifcopenshell.open(str(path))
@@ -488,6 +574,8 @@ def write_ifc(model, path):
         )
         element.OverallWidth /= 1000
         element.OverallHeight /= 1000
+        if element.is_a("IfcDoor") and not DOORS[element.Name][4]:
+            element.OperationType = "DOUBLE_DOOR_SLIDING"
     ifc.write(str(path))
 
 

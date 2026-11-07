@@ -42,7 +42,7 @@ There are no tests and no lint or format configuration in this repo.
 
 `build_house.py` is the source of truth for the three-bedroom house. The `.FCStd`, `.ifc`, plan `.pdf` and schedule `.csv` next to it are all generated and overwritten on each run, so hand edits to the `.FCStd` are lost. Commit the regenerated files together with the script change. Running the script rewrites them, so check `git status` first if they hold uncommitted work.
 
-The script is driven by constants and dicts at the top (`WALLS`, `ROOMS`, `WINDOWS`, `DOORS`, `MATERIALS`). `build()` turns them into Arch objects and the writers consume the result. Units are millimetres, X is east, Y is north, and Z = 0 is the finished floor.
+The script is driven by constants and dicts at the top (`WALLS`, `ROOMS`, `WINDOWS`, `DOORS`, `MATERIALS`, plus the shower and toilet sizes used by `fixture_specs`). `build()` turns them into Arch objects and the writers consume the result. Units are millimetres, X is east, Y is north, and Z = 0 is the finished floor.
 
 Things that are easy to break:
 

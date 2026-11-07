@@ -31,7 +31,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import Part  # noqa: E402
 from FreeCAD import Placement, Rotation, Vector  # noqa: E402
-from matplotlib.patches import Arc, Polygon, Rectangle  # noqa: E402
+from matplotlib.patches import Arc, Circle, Ellipse, Polygon, Rectangle  # noqa: E402
 
 HERE = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
 SLUG = "three-bedroom-house"
@@ -61,11 +61,28 @@ CLOSET_D = 600  # clear closet depth
 CLOSET_1_X = 9050  # closet side walls, just past each bedroom door
 CLOSET_2_X = 6550
 CLOSET_3_X = 9850
+SHOWER_W = 900  # shower tray, east-west
+SHOWER_D = 1400  # shower tray, north-south
+SHOWER_TRAY_H = 50
+SCREEN_T = 10  # fixed glass screen on the shower's west side
+SCREEN_H = 2000
+TOILET_Y = 6800  # toilet centre, back against the spine wall
+TOILET_D = 700  # wall to front of bowl
+TANK_D = 180
+TANK_W = 450
+TANK_H = 780
+BOWL_L = 560
+BOWL_W = 360
+BOWL_H = 400
 
 E = EXT_T
 I2 = INT_T / 2
 CLOSET_N_Y = HALL_N_Y + CLOSET_D + INT_T  # closet front wall, bedroom 1
 CLOSET_S_Y = HALL_S_Y - CLOSET_D - INT_T  # closet front wall, bedrooms 2 and 3
+SHOWER_X = BATH_SPLIT_X - I2 - SHOWER_W  # tray's south-west corner, in the north-east corner
+SHOWER_Y = DEPTH - E - SHOWER_D
+TOILET_X = SPINE_X + I2  # back of the tank
+BOWL_X = TOILET_X + TOILET_D - BOWL_L / 2  # bowl centre
 
 # name: (start, end, thickness), start and end on the wall centreline
 WALLS = {
@@ -122,6 +139,9 @@ PLAN_ROOM_NAMES = {
     "Closet 3": "Clóset 3",
 }
 
+# Fixture names printed on the floor plan
+PLAN_FIXTURE_NAMES = {"Shower": "Ducha", "Toilet": "Inodoro"}
+
 # Eastward shift of a room's plan label, to clear the door labels around it
 PLAN_LABEL_SHIFT = {"Hall": 1700}
 
@@ -132,7 +152,7 @@ WINDOWS = {
     "W03 Bedroom 3": ("Sliding 2-pane", "Wall South", 10300, 1500, 1200, 900),
     "W04 Dining": ("Sliding 2-pane", "Wall West", 2800, 1500, 1200, 900),
     "W05 Kitchen": ("Sliding 2-pane", "Wall North", 2700, 1500, 1000, 1100),
-    "W06 Bathroom": ("Awning", "Wall North", 6650, 600, 600, 1600),
+    "W06 Bathroom": ("Awning", "Wall North", 6500, 600, 600, 1600),
     "W07 Bedroom 1 North": ("Sliding 2-pane", "Wall North", 9900, 1500, 1200, 900),
     "W08 Bedroom 1 East": ("Sliding 2-pane", "Wall East", 6600, 1200, 1200, 900),
     "W09 Hall": ("Fixed", "Wall East", 4250, 600, 1200, 900),
@@ -162,6 +182,8 @@ MATERIALS = {
     "roof": ("Metal roof sheeting", (0.55, 0.22, 0.17)),
     "door": ("Timber", (0.55, 0.36, 0.20)),
     "window": ("Aluminium and glass", (0.60, 0.75, 0.85)),
+    "ceramic": ("Vitreous china", (0.96, 0.96, 0.94)),
+    "glass": ("Tempered glass", (0.75, 0.88, 0.92)),
 }
 
 
@@ -212,6 +234,24 @@ def add_opening(preset, label, wall, wall_name, centre, width, height, sill, mat
     obj.Hosts = [wall]
     obj.Material = material
     return obj
+
+
+def toilet_shape():
+    tank = Part.makeBox(TANK_D, TANK_W, TANK_H, Vector(TOILET_X, TOILET_Y - TANK_W / 2, 0))
+    outline = Part.Ellipse(Vector(BOWL_X, TOILET_Y, 0), BOWL_L / 2, BOWL_W / 2).toShape()
+    bowl = Part.Face(Part.Wire(outline)).extrude(Vector(0, 0, BOWL_H))
+    return tank.fuse(bowl).removeSplitter()
+
+
+def fixture_specs():
+    """Name, shape, IFC type, predefined type and material key of each fixture."""
+    tray = Part.makeBox(SHOWER_W, SHOWER_D, SHOWER_TRAY_H, Vector(SHOWER_X, SHOWER_Y, 0))
+    screen = Part.makeBox(SCREEN_T, SHOWER_D, SCREEN_H, Vector(SHOWER_X - SCREEN_T, SHOWER_Y, 0))
+    return (
+        ("Shower", tray, "Sanitary Terminal", "SHOWER", "ceramic"),
+        ("Shower screen", screen, "Plate", "NOTDEFINED", "glass"),
+        ("Toilet", toilet_shape(), "Sanitary Terminal", "TOILETPAN", "ceramic"),
+    )
 
 
 def build(doc):
@@ -284,8 +324,24 @@ def build(doc):
         spaces.append(space)
     doc.recompute()
 
+    fixtures = []
+    shapes = doc.addObject("App::DocumentObjectGroup", "FixtureShapes")
+    shapes.Label = "Fixture shapes"
+    for name, shape, ifc_type, predefined, material in fixture_specs():
+        base = doc.addObject("Part::Feature", "FixtureShape")
+        base.Label = f"{name} shape"
+        base.Shape = shape
+        shapes.addObject(base)
+        fixture = Arch.makeEquipment(base)
+        fixture.Label = name
+        fixture.IfcType = ifc_type
+        fixture.PredefinedType = predefined
+        fixture.Material = materials[material]
+        fixtures.append(fixture)
+    doc.recompute()
+
     storey = Arch.makeFloor(
-        [slab, *walls.values(), *windows, *doors, roof, *spaces], name="Ground floor"
+        [slab, *walls.values(), *windows, *doors, roof, *spaces, *fixtures], name="Ground floor"
     )
     building = Arch.makeBuilding([storey], name="Three Bedroom House")
     site = Arch.makeSite([building], name="Site")
@@ -297,6 +353,7 @@ def build(doc):
         "walls": walls,
         "windows": windows,
         "doors": doors,
+        "fixtures": fixtures,
         "slab": slab,
         "roof": roof,
         "spaces": spaces,
@@ -339,6 +396,12 @@ def schedule_rows(model):
                 (kind, obj.Label, ifc_type, host, m(width), m(height), "",
                  m2(width * height), "")
             )  # fmt: skip
+    for obj in model["fixtures"]:
+        bbox = obj.Shape.BoundBox
+        rows.append(
+            ("Fixture", obj.Label, "Ifc" + obj.IfcType.replace(" ", ""), "", m(bbox.XLength),
+             m(bbox.YLength), "", m2(bbox.XLength * bbox.YLength), m3(obj.Shape.Volume))
+        )  # fmt: skip
     for obj, ifc_type in ((model["slab"], "IfcSlab"), (model["roof"], "IfcRoof")):
         rows.append(
             ("Envelope", obj.Label, ifc_type, "", "", "", "", "", m3(obj.Shape.Volume))
@@ -446,6 +509,36 @@ def metres(value):
     return f"{value / 1000:.2f}"
 
 
+def draw_shower(ax):
+    ax.add_patch(
+        Rectangle((SHOWER_X, SHOWER_Y), SHOWER_W, SHOWER_D, fc="#e6f0f7", ec="#222", lw=0.5)
+    )
+    centre_x = SHOWER_X + SHOWER_W / 2
+    ax.add_patch(
+        Circle((centre_x, SHOWER_Y + SHOWER_D * 0.7), 50, fc="white", ec="#222", lw=0.4)
+    )
+    screen_x = SHOWER_X - SCREEN_T / 2
+    ax.plot([screen_x, screen_x], [SHOWER_Y, SHOWER_Y + SHOWER_D], color="#2a6fa8", lw=1.1)
+    ax.text(centre_x, SHOWER_Y + 480, PLAN_FIXTURE_NAMES["Shower"], ha="center", va="center",
+            fontsize=7, fontweight="bold", color="#111")  # fmt: skip
+    ax.text(centre_x, SHOWER_Y + 280, f"{metres(SHOWER_W)} × {metres(SHOWER_D)}",
+            ha="center", va="center", fontsize=6, color="#444")  # fmt: skip
+
+
+def draw_toilet(ax):
+    ax.add_patch(
+        Ellipse((BOWL_X, TOILET_Y), BOWL_L, BOWL_W, fc="white", ec="#222", lw=0.5)
+    )
+    ax.add_patch(
+        Ellipse((BOWL_X + 20, TOILET_Y), BOWL_L - 160, BOWL_W - 120, fc="white", ec="#222", lw=0.3)
+    )
+    ax.add_patch(
+        Rectangle((TOILET_X, TOILET_Y - TANK_W / 2), TANK_D, TANK_W, fc="white", ec="#222", lw=0.5)
+    )
+    ax.text(TOILET_X + TOILET_D / 2, TOILET_Y - TANK_W / 2 - 130, PLAN_FIXTURE_NAMES["Toilet"],
+            ha="center", va="center", fontsize=7, fontweight="bold", color="#111")  # fmt: skip
+
+
 def opening_label(ax, wall_name, centre, side, name, width, height, colour):
     """Tag and width x height, beside an opening on the low (-1) or high (+1) side."""
     (x0, y0), _, thickness = WALLS[wall_name]
@@ -511,6 +604,9 @@ def write_plan(model, path):
     for name, (host, centre, width, height, hinge, swing) in DOORS.items():
         draw_door(ax, host, centre, width, hinge, swing)
         opening_label(ax, host, centre, -swing, name, width, height, "#8a4b1f")
+
+    draw_shower(ax)
+    draw_toilet(ax)
 
     for space in model["spaces"]:
         centre = space.Shape.CenterOfMass  # bedrooms are L-shaped

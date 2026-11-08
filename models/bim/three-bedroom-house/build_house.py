@@ -8,7 +8,7 @@ Run with FreeCAD's own interpreter, from anywhere:
 Writes next to this file:
     three-bedroom-house.FCStd          native BIM model
     three-bedroom-house.ifc            IFC export
-    three-bedroom-house-plan.pdf       floor plan, A3 at 1:50
+    three-bedroom-house-plan.pdf       floor plan and four elevations, A3 at 1:50
     three-bedroom-house-schedule.csv   room, wall and opening quantities
 
 All lengths are millimetres. X runs east, Y runs north, Z = 0 is the finished
@@ -30,12 +30,14 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import Part  # noqa: E402
+import TechDraw  # noqa: E402
 from FreeCAD import Placement, Rotation, Vector  # noqa: E402
-from matplotlib.patches import Arc, Polygon, Rectangle  # noqa: E402
+from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
+from matplotlib.patches import Arc, Circle, Ellipse, Polygon, Rectangle  # noqa: E402
 
 HERE = Path(__file__).resolve().parent if "__file__" in globals() else Path.cwd()
 SLUG = "three-bedroom-house"
-CREATOR = "Sebastian"  # shown on the plan and stored in the FCStd and IFC metadata
+CREATOR = "Sebastian Mudarra"  # shown on the plan and stored in the FCStd and IFC metadata
 
 # --- Design parameters ------------------------------------------------------
 LENGTH = 12000  # outer east-west size
@@ -57,9 +59,32 @@ HALL_N_Y = 4800  # north hall wall
 BED_SPLIT_X = 8700  # wall between bedrooms 2 and 3
 BATH_SPLIT_X = 7900  # wall between bathroom and bedroom 1
 KITCHEN_S_Y = 5350  # notional kitchen / dining boundary (no wall)
+CLOSET_D = 600  # clear closet depth
+CLOSET_1_X = 9050  # closet side walls, just past each bedroom door
+CLOSET_2_X = 6550
+CLOSET_3_X = 9850
+SHOWER_W = 900  # shower tray, east-west
+SHOWER_D = 1400  # shower tray, north-south
+SHOWER_TRAY_H = 50
+SCREEN_T = 10  # fixed glass screen on the shower's west side
+SCREEN_H = 2000
+TOILET_Y = 6800  # toilet centre, back against the spine wall
+TOILET_D = 700  # wall to front of bowl
+TANK_D = 180
+TANK_W = 450
+TANK_H = 780
+BOWL_L = 560
+BOWL_W = 360
+BOWL_H = 400
 
 E = EXT_T
 I2 = INT_T / 2
+CLOSET_N_Y = HALL_N_Y + CLOSET_D + INT_T  # closet front wall, bedroom 1
+CLOSET_S_Y = HALL_S_Y - CLOSET_D - INT_T  # closet front wall, bedrooms 2 and 3
+SHOWER_X = BATH_SPLIT_X - I2 - SHOWER_W  # tray's south-west corner, in the north-east corner
+SHOWER_Y = DEPTH - E - SHOWER_D
+TOILET_X = SPINE_X + I2  # back of the tank
+BOWL_X = TOILET_X + TOILET_D - BOWL_L / 2  # bowl centre
 
 # name: (start, end, thickness), start and end on the wall centreline
 WALLS = {
@@ -73,6 +98,12 @@ WALLS = {
     "Wall Hall North": ((SPINE_X + I2, HALL_N_Y), (LENGTH - E, HALL_N_Y), INT_T),
     "Wall Bedrooms": ((BED_SPLIT_X, E), (BED_SPLIT_X, HALL_S_Y - I2), INT_T),
     "Wall Bathroom": ((BATH_SPLIT_X, HALL_N_Y + I2), (BATH_SPLIT_X, DEPTH - E), INT_T),
+    "Wall Closet 1 Front": ((CLOSET_1_X - I2, CLOSET_N_Y), (LENGTH - E, CLOSET_N_Y), INT_T),
+    "Wall Closet 1 Side": ((CLOSET_1_X, HALL_N_Y + I2), (CLOSET_1_X, CLOSET_N_Y - I2), INT_T),
+    "Wall Closet 2 Front": ((CLOSET_2_X - I2, CLOSET_S_Y), (BED_SPLIT_X - I2, CLOSET_S_Y), INT_T),
+    "Wall Closet 2 Side": ((CLOSET_2_X, CLOSET_S_Y + I2), (CLOSET_2_X, HALL_S_Y - I2), INT_T),
+    "Wall Closet 3 Front": ((CLOSET_3_X - I2, CLOSET_S_Y), (LENGTH - E, CLOSET_S_Y), INT_T),
+    "Wall Closet 3 Side": ((CLOSET_3_X, CLOSET_S_Y + I2), (CLOSET_3_X, HALL_S_Y - I2), INT_T),
 }
 
 # name: (x0, y0, x1, y1, FreeCAD space type)
@@ -84,6 +115,16 @@ ROOMS = {
     "Bedroom 1": (BATH_SPLIT_X + I2, HALL_N_Y + I2, LENGTH - E, DEPTH - E, "Dormitory - Living Quarters"),
     "Bedroom 2": (SPINE_X + I2, E, BED_SPLIT_X - I2, HALL_S_Y - I2, "Dormitory - Living Quarters"),
     "Bedroom 3": (BED_SPLIT_X + I2, E, LENGTH - E, HALL_S_Y - I2, "Dormitory - Living Quarters"),
+    "Closet 1": (CLOSET_1_X + I2, HALL_N_Y + I2, LENGTH - E, CLOSET_N_Y - I2, "Active Storage"),
+    "Closet 2": (CLOSET_2_X + I2, CLOSET_S_Y + I2, BED_SPLIT_X - I2, HALL_S_Y - I2, "Active Storage"),
+    "Closet 3": (CLOSET_3_X + I2, CLOSET_S_Y + I2, LENGTH - E, HALL_S_Y - I2, "Active Storage"),
+}
+
+# name: (x0, y0, x1, y1), the part of a room taken up by a closet and its walls
+ROOM_CUTOUTS = {
+    "Bedroom 1": (CLOSET_1_X - I2, HALL_N_Y + I2, LENGTH - E, CLOSET_N_Y + I2),
+    "Bedroom 2": (CLOSET_2_X - I2, CLOSET_S_Y - I2, BED_SPLIT_X - I2, HALL_S_Y - I2),
+    "Bedroom 3": (CLOSET_3_X - I2, CLOSET_S_Y - I2, LENGTH - E, HALL_S_Y - I2),
 }
 
 # Room names printed on the floor plan
@@ -95,32 +136,49 @@ PLAN_ROOM_NAMES = {
     "Bedroom 1": "Dormitorio 1",
     "Bedroom 2": "Dormitorio 2",
     "Bedroom 3": "Dormitorio 3",
+    "Closet 1": "Clóset 1",
+    "Closet 2": "Clóset 2",
+    "Closet 3": "Clóset 3",
 }
+
+# Fixture names printed on the floor plan
+PLAN_FIXTURE_NAMES = {"Shower": "Ducha", "Toilet": "Inodoro"}
+
+# Eastward shift of a room's plan label, to clear the door labels around it
+PLAN_LABEL_SHIFT = {"Hall": 1700}
+
+# The first word of a WINDOWS or DOORS name is its type tag: openings of the
+# same kind and size share one tag, and check_opening_types enforces that.
 
 # name: (preset, host wall, centre along wall axis, width, height, sill)
 WINDOWS = {
     "W01 Lounge": ("Sliding 2-pane", "Wall South", 3500, 2000, 1500, 600),
     "W02 Bedroom 2": ("Sliding 2-pane", "Wall South", 7050, 1500, 1200, 900),
-    "W03 Bedroom 3": ("Sliding 2-pane", "Wall South", 10300, 1500, 1200, 900),
-    "W04 Dining": ("Sliding 2-pane", "Wall West", 2800, 1500, 1200, 900),
-    "W05 Kitchen": ("Sliding 2-pane", "Wall North", 2700, 1500, 1000, 1100),
-    "W06 Bathroom": ("Awning", "Wall North", 6650, 600, 600, 1600),
-    "W07 Bedroom 1 North": ("Sliding 2-pane", "Wall North", 9900, 1500, 1200, 900),
-    "W08 Bedroom 1 East": ("Sliding 2-pane", "Wall East", 6600, 1200, 1200, 900),
-    "W09 Hall": ("Fixed", "Wall East", 4250, 600, 1200, 900),
-    "W10 Bedroom 3 East": ("Sliding 2-pane", "Wall East", 1900, 1200, 1200, 900),
+    "W02 Bedroom 3": ("Sliding 2-pane", "Wall South", 10300, 1500, 1200, 900),
+    "W02 Dining": ("Sliding 2-pane", "Wall West", 2800, 1500, 1200, 900),
+    "W03 Kitchen": ("Sliding 2-pane", "Wall North", 2700, 1500, 1000, 1100),
+    "W04 Bathroom": ("Awning", "Wall North", 6500, 600, 600, 1600),
+    "W02 Bedroom 1 North": ("Sliding 2-pane", "Wall North", 9900, 1500, 1200, 900),
+    "W05 Bedroom 1 East": ("Sliding 2-pane", "Wall East", 6600, 1200, 1200, 900),
+    "W06 Hall": ("Fixed", "Wall East", 4250, 600, 1200, 900),
+    "W05 Bedroom 3 East": ("Sliding 2-pane", "Wall East", 1900, 1200, 1200, 900),
 }
 
 # name: (host wall, centre along wall axis, width, height, hinge end, swing side)
 # hinge end -1/+1 is the low/high end along the wall axis; swing side -1/+1 is
-# the low/high side across it. Swing data is used for the plan symbol.
+# the low/high side across it. Swing data is used for the plan symbol. Hinge end
+# 0 is a sliding door, and its swing side is the side the closet is on. Door tags
+# and sizes are printed on the side opposite the swing.
 DOORS = {
     "D01 Main entry": ("Wall South", 1200, 1000, 2100, -1, 1),
     "D02 Kitchen": ("Wall West", 6100, 900, 2100, 1, 1),
     "D03 Bathroom": ("Wall Hall North", 6650, 800, 2100, -1, 1),
-    "D04 Bedroom 1": ("Wall Hall North", 8500, 900, 2100, -1, 1),
-    "D05 Bedroom 2": ("Wall Hall South", 6000, 900, 2100, -1, -1),
-    "D06 Bedroom 3": ("Wall Hall South", 9300, 900, 2100, 1, -1),
+    "D02 Bedroom 1": ("Wall Hall North", 8500, 900, 2100, -1, 1),
+    "D02 Bedroom 2": ("Wall Hall South", 6000, 900, 2100, -1, -1),
+    "D02 Bedroom 3": ("Wall Hall South", 9300, 900, 2100, 1, -1),
+    "D04 Closet 1": ("Wall Closet 1 Front", (CLOSET_1_X + I2 + LENGTH - E) / 2, 2400, 2100, 0, -1),
+    "D05 Closet 2": ("Wall Closet 2 Front", (CLOSET_2_X + I2 + BED_SPLIT_X - I2) / 2, 1800, 2100, 0, 1),
+    "D05 Closet 3": ("Wall Closet 3 Front", (CLOSET_3_X + I2 + LENGTH - E) / 2, 1800, 2100, 0, 1),
 }
 
 MATERIALS = {
@@ -129,7 +187,31 @@ MATERIALS = {
     "roof": ("Metal roof sheeting", (0.55, 0.22, 0.17)),
     "door": ("Timber", (0.55, 0.36, 0.20)),
     "window": ("Aluminium and glass", (0.60, 0.75, 0.85)),
+    "ceramic": ("Vitreous china", (0.96, 0.96, 0.94)),
+    "glass": ("Tempered glass", (0.75, 0.88, 0.92)),
 }
+
+
+# --- Opening types ----------------------------------------------------------
+def opening_types():
+    """Tag, kind, width, height, sill and count of each door and window type."""
+    specs = [(name, (preset, width, height, sill))
+             for name, (preset, _, _, width, height, sill) in WINDOWS.items()]
+    specs += [(name, ("Sliding" if not hinge else "Hinged", width, height, 0))
+              for name, (_, _, width, height, hinge, _) in DOORS.items()]  # fmt: skip
+    types = {}
+    for name, spec in specs:
+        tag = name.split()[0]
+        if tag in types and types[tag][0] != spec:
+            raise ValueError(f"{name}: tag {tag} is already used for {types[tag][0]}")
+        types[tag] = (spec, types.get(tag, (spec, 0))[1] + 1)
+    groups = {}
+    for tag, (spec, _) in types.items():
+        groups.setdefault((tag[0], spec), []).append(tag)
+    clashes = [tags for tags in groups.values() if len(tags) > 1]
+    if clashes:
+        raise ValueError(f"same type under several tags: {clashes}")
+    return [(tag, *spec, count) for tag, (spec, count) in types.items()]
 
 
 # --- Model ------------------------------------------------------------------
@@ -181,6 +263,24 @@ def add_opening(preset, label, wall, wall_name, centre, width, height, sill, mat
     return obj
 
 
+def toilet_shape():
+    tank = Part.makeBox(TANK_D, TANK_W, TANK_H, Vector(TOILET_X, TOILET_Y - TANK_W / 2, 0))
+    outline = Part.Ellipse(Vector(BOWL_X, TOILET_Y, 0), BOWL_L / 2, BOWL_W / 2).toShape()
+    bowl = Part.Face(Part.Wire(outline)).extrude(Vector(0, 0, BOWL_H))
+    return tank.fuse(bowl).removeSplitter()
+
+
+def fixture_specs():
+    """Name, shape, IFC type, predefined type and material key of each fixture."""
+    tray = Part.makeBox(SHOWER_W, SHOWER_D, SHOWER_TRAY_H, Vector(SHOWER_X, SHOWER_Y, 0))
+    screen = Part.makeBox(SCREEN_T, SHOWER_D, SCREEN_H, Vector(SHOWER_X - SCREEN_T, SHOWER_Y, 0))
+    return (
+        ("Shower", tray, "Sanitary Terminal", "SHOWER", "ceramic"),
+        ("Shower screen", screen, "Plate", "NOTDEFINED", "glass"),
+        ("Toilet", toilet_shape(), "Sanitary Terminal", "TOILETPAN", "ceramic"),
+    )
+
+
 def build(doc):
     materials = {key: Arch.makeMaterial(name) for key, (name, _) in MATERIALS.items()}
     for key, (_, colour) in MATERIALS.items():
@@ -202,12 +302,15 @@ def build(doc):
             )
         )
     doors = []
-    for name, (host, centre, width, height, _, _) in DOORS.items():
-        doors.append(
-            add_opening(
-                "Simple door", name, walls[host], host, centre, width, height, 0, materials["door"]
-            )
+    for name, (host, centre, width, height, hinge, _) in DOORS.items():
+        preset = "Simple door" if hinge else "Sliding 2-pane"
+        door = add_opening(
+            preset, name, walls[host], host, centre, width, height, 0, materials["door"]
         )
+        if not hinge:  # the sliding preset is a glazed window
+            door.IfcType = "Door"
+            door.WindowParts = [p.replace("Glass panel", "Solid panel") for p in door.WindowParts]
+        doors.append(door)
     doc.recompute()
 
     slab_base = Draft.make_rectangle(LENGTH, DEPTH, Placement(Vector(0, 0, -SLAB_T), Rotation()))
@@ -233,10 +336,13 @@ def build(doc):
     volumes = doc.addObject("App::DocumentObjectGroup", "RoomVolumes")
     volumes.Label = "Room volumes"
     for name, (x0, y0, x1, y1, space_type) in ROOMS.items():
-        box = doc.addObject("Part::Box", "RoomVolume")
+        shape = Part.makeBox(x1 - x0, y1 - y0, WALL_H, Vector(x0, y0, 0))
+        if name in ROOM_CUTOUTS:
+            cx0, cy0, cx1, cy1 = ROOM_CUTOUTS[name]
+            shape = shape.cut(Part.makeBox(cx1 - cx0, cy1 - cy0, WALL_H, Vector(cx0, cy0, 0)))
+        box = doc.addObject("Part::Feature", "RoomVolume")
         box.Label = f"{name} volume"
-        box.Length, box.Width, box.Height = x1 - x0, y1 - y0, WALL_H
-        box.Placement = Placement(Vector(x0, y0, 0), Rotation())
+        box.Shape = shape
         volumes.addObject(box)
         space = Arch.makeSpace(box)
         space.Label = name
@@ -245,8 +351,24 @@ def build(doc):
         spaces.append(space)
     doc.recompute()
 
+    fixtures = []
+    shapes = doc.addObject("App::DocumentObjectGroup", "FixtureShapes")
+    shapes.Label = "Fixture shapes"
+    for name, shape, ifc_type, predefined, material in fixture_specs():
+        base = doc.addObject("Part::Feature", "FixtureShape")
+        base.Label = f"{name} shape"
+        base.Shape = shape
+        shapes.addObject(base)
+        fixture = Arch.makeEquipment(base)
+        fixture.Label = name
+        fixture.IfcType = ifc_type
+        fixture.PredefinedType = predefined
+        fixture.Material = materials[material]
+        fixtures.append(fixture)
+    doc.recompute()
+
     storey = Arch.makeFloor(
-        [slab, *walls.values(), *windows, *doors, roof, *spaces], name="Ground floor"
+        [slab, *walls.values(), *windows, *doors, roof, *spaces, *fixtures], name="Ground floor"
     )
     building = Arch.makeBuilding([storey], name="Three Bedroom House")
     site = Arch.makeSite([building], name="Site")
@@ -258,6 +380,7 @@ def build(doc):
         "walls": walls,
         "windows": windows,
         "doors": doors,
+        "fixtures": fixtures,
         "slab": slab,
         "roof": roof,
         "spaces": spaces,
@@ -300,6 +423,12 @@ def schedule_rows(model):
                 (kind, obj.Label, ifc_type, host, m(width), m(height), "",
                  m2(width * height), "")
             )  # fmt: skip
+    for obj in model["fixtures"]:
+        bbox = obj.Shape.BoundBox
+        rows.append(
+            ("Fixture", obj.Label, "Ifc" + obj.IfcType.replace(" ", ""), "", m(bbox.XLength),
+             m(bbox.YLength), "", m2(bbox.XLength * bbox.YLength), m3(obj.Shape.Volume))
+        )  # fmt: skip
     for obj, ifc_type in ((model["slab"], "IfcSlab"), (model["roof"], "IfcRoof")):
         rows.append(
             ("Envelope", obj.Label, ifc_type, "", "", "", "", "", m3(obj.Shape.Volume))
@@ -318,7 +447,52 @@ def write_schedule(model, path):
         writer.writerows(schedule_rows(model))
 
 
-# --- Floor plan -------------------------------------------------------------
+# --- Drawings ---------------------------------------------------------------
+SHEET_W, SHEET_H, SCALE = 420, 297, 50  # A3 in mm, 1:50
+SHEET_COUNT = 3  # floor plan, then two sheets of elevations
+
+# name: (Spanish title, exterior wall, direction towards the viewer, rightward axis)
+ELEVATIONS = {
+    "South": ("Fachada Sur", "Wall South", Vector(0, -1, 0), Vector(1, 0, 0)),
+    "North": ("Fachada Norte", "Wall North", Vector(0, 1, 0), Vector(-1, 0, 0)),
+    "East": ("Fachada Este", "Wall East", Vector(1, 0, 0), Vector(0, 1, 0)),
+    "West": ("Fachada Oeste", "Wall West", Vector(-1, 0, 0), Vector(0, -1, 0)),
+}
+
+
+def new_sheet(ox, oy):
+    """A3 figure whose axes use model millimetres, lower-left corner at ox, oy."""
+    figure = plt.figure(figsize=(SHEET_W / 25.4, SHEET_H / 25.4))
+    ax = figure.add_axes([0, 0, 1, 1])
+    ax.set_xlim(ox, ox + SHEET_W * SCALE)
+    ax.set_ylim(oy, oy + SHEET_H * SCALE)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    return figure, ax
+
+
+def title_block(ax, x, y, subtitle, notes, sheet):
+    """Title, notes and creator; returns the y below the last line."""
+    block = [
+        ("Casa de tres dormitorios", 12, "bold"),
+        (subtitle, 9, "normal"),
+        (f"Escala 1:{SCALE} (hoja A3)", 7.5, "normal"),
+        *[(note, 7.5, "normal") for note in notes],
+        (f"Creado por {CREATOR}", 7.5, "normal"),
+        (f"Hoja {sheet} de {SHEET_COUNT}", 7.5, "normal"),
+    ]
+    for text, size, weight in block:
+        ax.text(x, y, text, fontsize=size, fontweight=weight, color="#111")
+        y -= 480 if size < 12 else 620
+    return y
+
+
+DIM_SCALE = 1.15  # size of dimension text, its offset from the line, and the ticks
+DIM_TEXT = 6.5 * DIM_SCALE
+DIM_GAP = 70 * DIM_SCALE
+DIM_TICK = 40 * DIM_SCALE
+
+
 def wall_cut_faces(model, z=1200):
     """Fused section through the real wall solids, openings included."""
     faces = []
@@ -342,17 +516,18 @@ def dimension(ax, p0, p1, offset, text=None):
     for p, q in ((p0, a), (p1, b)):
         ax.plot([p[0] + nx * 0.2, q[0] + nx * 0.1], [p[1] + ny * 0.2, q[1] + ny * 0.1],
                 color="#333", lw=0.3)  # fmt: skip
-        ax.plot([q[0] - 40, q[0] + 40], [q[1] - 40, q[1] + 40], color="#333", lw=0.7)
+        ax.plot([q[0] - DIM_TICK, q[0] + DIM_TICK], [q[1] - DIM_TICK, q[1] + DIM_TICK],
+                color="#333", lw=0.7)  # fmt: skip
     rotation = 90 if abs(dy) > abs(dx) else 0
-    side = 70 if offset > 0 else -70
+    side = DIM_GAP if offset > 0 else -DIM_GAP
     label_x = (a[0] + b[0]) / 2 + (side * -1 if rotation and offset > 0 else 0)
     label_y = (a[1] + b[1]) / 2
     if rotation:
-        label_x = (a[0] + b[0]) / 2 - 70
+        label_x = (a[0] + b[0]) / 2 - DIM_GAP
     else:
-        label_y += 70
-    ax.text(label_x, label_y, text or f"{length:.0f}", ha="center", va="center",
-            rotation=rotation, fontsize=6.5, color="#333")  # fmt: skip
+        label_y += DIM_GAP
+    ax.text(label_x, label_y, text or f"{length / 1000:.2f}", ha="center", va="center",
+            rotation=rotation, fontsize=DIM_TEXT, color="#333")  # fmt: skip
 
 
 def draw_window(ax, wall_name, centre, width):
@@ -368,7 +543,23 @@ def draw_window(ax, wall_name, centre, width):
     ax.plot(*glass, color="#2a6fa8", lw=1.1)
 
 
+def draw_sliding_door(ax, wall_name, centre, width):
+    """Two overlapping leaves, one each side of the wall's centre plane."""
+    (x0, y0), _, _ = WALLS[wall_name]
+    for start, end, offset in (
+        (centre - width / 2, centre + width * 0.05, -20),
+        (centre - width * 0.05, centre + width / 2, 20),
+    ):
+        if is_along_x(wall_name):
+            ax.plot([start, end], [y0 + offset, y0 + offset], color="#222", lw=0.8)
+        else:
+            ax.plot([x0 + offset, x0 + offset], [start, end], color="#222", lw=0.8)
+
+
 def draw_door(ax, wall_name, centre, width, hinge, swing):
+    if not hinge:
+        draw_sliding_door(ax, wall_name, centre, width)
+        return
     (x0, y0), _, thickness = WALLS[wall_name]
     half = thickness / 2 * swing
     if is_along_x(wall_name):
@@ -387,15 +578,69 @@ def draw_door(ax, wall_name, centre, width, hinge, swing):
     )  # fmt: skip
 
 
-def write_plan(model, path):
-    sheet_w, sheet_h, scale = 420, 297, 50  # A3 in mm, 1:50
-    figure = plt.figure(figsize=(sheet_w / 25.4, sheet_h / 25.4))
-    ax = figure.add_axes([0, 0, 1, 1])
-    ox, oy = -3000, -3100  # model coordinates of the sheet's lower-left corner
-    ax.set_xlim(ox, ox + sheet_w * scale)
-    ax.set_ylim(oy, oy + sheet_h * scale)
-    ax.set_aspect("equal")
-    ax.axis("off")
+def metres(value):
+    return f"{value / 1000:.2f}"
+
+
+def draw_shower(ax):
+    ax.add_patch(
+        Rectangle((SHOWER_X, SHOWER_Y), SHOWER_W, SHOWER_D, fc="#e6f0f7", ec="#222", lw=0.5)
+    )
+    centre_x = SHOWER_X + SHOWER_W / 2
+    ax.add_patch(
+        Circle((centre_x, SHOWER_Y + SHOWER_D * 0.7), 50, fc="white", ec="#222", lw=0.4)
+    )
+    screen_x = SHOWER_X - SCREEN_T / 2
+    ax.plot([screen_x, screen_x], [SHOWER_Y, SHOWER_Y + SHOWER_D], color="#2a6fa8", lw=1.1)
+    ax.text(centre_x, SHOWER_Y + 480, PLAN_FIXTURE_NAMES["Shower"], ha="center", va="center",
+            fontsize=7, fontweight="bold", color="#111")  # fmt: skip
+    ax.text(centre_x, SHOWER_Y + 280, f"{metres(SHOWER_W)} × {metres(SHOWER_D)}",
+            ha="center", va="center", fontsize=6, color="#444")  # fmt: skip
+
+
+def draw_toilet(ax):
+    ax.add_patch(
+        Ellipse((BOWL_X, TOILET_Y), BOWL_L, BOWL_W, fc="white", ec="#222", lw=0.5)
+    )
+    ax.add_patch(
+        Ellipse((BOWL_X + 20, TOILET_Y), BOWL_L - 160, BOWL_W - 120, fc="white", ec="#222", lw=0.3)
+    )
+    ax.add_patch(
+        Rectangle((TOILET_X, TOILET_Y - TANK_W / 2), TANK_D, TANK_W, fc="white", ec="#222", lw=0.5)
+    )
+    ax.text(TOILET_X + TOILET_D / 2, TOILET_Y - TANK_W / 2 - 130, PLAN_FIXTURE_NAMES["Toilet"],
+            ha="center", va="center", fontsize=7, fontweight="bold", color="#111")  # fmt: skip
+
+
+def opening_label(ax, wall_name, centre, side, name, width, height, colour):
+    """Tag and width x height, beside an opening on the low (-1) or high (+1) side."""
+    (x0, y0), _, thickness = WALLS[wall_name]
+    text = f"{name.split()[0]}  {metres(width)} × {metres(height)}"
+    offset = side * (thickness / 2 + 200)
+    if is_along_x(wall_name):
+        ax.text(centre, y0 + offset, text, ha="center", va="center", fontsize=6, color=colour)
+    else:
+        ax.text(x0 + offset, centre, text, ha="center", va="center", fontsize=6, color=colour,
+                rotation=90)  # fmt: skip
+
+
+def opening_table(ax, x, y):
+    """Table of every door and window, the only place sills are shown."""
+    columns = (("Marca", 0), ("Cant.", 800), ("Ancho", 1600), ("Alto", 2400), ("Antepecho", 3200))
+    ax.text(x, y, "Cuadro de puertas y ventanas (m)", fontsize=7.5, fontweight="bold", color="#111")
+    y -= 260
+    for title, dx in columns:
+        ax.text(x + dx, y, title, fontsize=6, fontweight="bold", color="#111")
+    ax.plot([x, x + 4100], [y - 70, y - 70], color="#333", lw=0.4)
+    for tag, _, width, height, sill, count in sorted(opening_types(), key=lambda t: t[0][0] != "W"):
+        y -= 215
+        values = (tag, str(count), metres(width), metres(height), metres(sill) if sill else "–")
+        for value, (_, dx) in zip(values, columns):
+            ax.text(x + dx, y, value, fontsize=6, color="#333")
+
+
+def plan_sheet(model):
+    figure, ax = new_sheet(-3000, -3100)  # model coordinates of the lower-left corner
 
     ax.add_patch(
         Rectangle((-EAVE, -EAVE), LENGTH + 2 * EAVE, DEPTH + 2 * EAVE, fill=False,
@@ -415,25 +660,24 @@ def write_plan(model, path):
     for face in wall_cut_faces(model):
         ax.add_patch(Polygon(wire_xy(face.OuterWire), closed=True, fc="#3a3a3a", ec="#111", lw=0.6))
 
-    for name, (_, host, centre, width, _, _) in WINDOWS.items():
+    for name, (_, host, centre, width, height, _) in WINDOWS.items():
         draw_window(ax, host, centre, width)
-        tag = name.split()[0]
         (x0, y0), _, _ = WALLS[host]
-        if is_along_x(host):
-            outside = -280 if y0 < DEPTH / 2 else 280
-            ax.text(centre, y0 + outside, tag, ha="center", va="center", fontsize=6, color="#2a6fa8")
-        else:
-            outside = -280 if x0 < LENGTH / 2 else 280
-            ax.text(x0 + outside, centre, tag, ha="center", va="center", fontsize=6,
-                    color="#2a6fa8", rotation=90)  # fmt: skip
-    for name, (host, centre, width, _, hinge, swing) in DOORS.items():
+        low_side = y0 < DEPTH / 2 if is_along_x(host) else x0 < LENGTH / 2
+        opening_label(ax, host, centre, -1 if low_side else 1, name, width, height, "#2a6fa8")
+    for name, (host, centre, width, height, hinge, swing) in DOORS.items():
         draw_door(ax, host, centre, width, hinge, swing)
+        opening_label(ax, host, centre, -swing, name, width, height, "#8a4b1f")
+
+    draw_shower(ax)
+    draw_toilet(ax)
 
     for space in model["spaces"]:
-        bbox = space.Shape.BoundBox
-        ax.text(bbox.Center.x, bbox.Center.y + 130, PLAN_ROOM_NAMES[space.Label], ha="center", va="center",
+        centre = space.Shape.CenterOfMass  # bedrooms are L-shaped
+        label_x = centre.x + PLAN_LABEL_SHIFT.get(space.Label, 0)
+        ax.text(label_x, centre.y + 130, PLAN_ROOM_NAMES[space.Label], ha="center", va="center",
                 fontsize=9, fontweight="bold", color="#111")  # fmt: skip
-        ax.text(bbox.Center.x, bbox.Center.y - 170, f"{space.Area.Value / 1e6:.1f} m²",
+        ax.text(label_x, centre.y - 170, f"{space.Area.Value / 1e6:.1f} m²",
                 ha="center", va="center", fontsize=7.5, color="#444")  # fmt: skip
 
     ax.plot([E, SPINE_X - I2], [KITCHEN_S_Y, KITCHEN_S_Y], color="#999", lw=0.4, ls=(0, (3, 3)))
@@ -453,29 +697,112 @@ def write_plan(model, path):
     ax.text(arrow_x, arrow_y + 1100, "N", ha="center", fontsize=11, fontweight="bold")
 
     total = sum(space.Area.Value for space in model["spaces"]) / 1e6
-    block = [
-        ("Three Bedroom House", 12, "bold"),
-        ("Ground floor plan", 9, "normal"),
-        ("Scale 1:50 on A3   Dimensions in mm", 7.5, "normal"),
-        (f"Internal floor area {total:.1f} m²", 7.5, "normal"),
-        (f"Gross footprint {LENGTH * DEPTH / 1e6:.1f} m²", 7.5, "normal"),
-        ("Dashed outline: roof above", 7.5, "normal"),
-        (f"Created by {CREATOR}", 7.5, "normal"),
+    notes = [
+        "Cotas en metros; vanos: ancho × alto",
+        f"Área interior {total:.1f} m²",
+        f"Área de construcción {LENGTH * DEPTH / 1e6:.1f} m²",
+        "Línea discontinua: techo",
     ]
-    y = 6900
-    for text, size, weight in block:
-        ax.text(13700, y, text, fontsize=size, fontweight=weight, color="#111")
-        y -= 480 if size < 12 else 620
-    figure.savefig(path)
-    plt.close(figure)
+    y = title_block(ax, 13700, 6900, "Planta arquitectónica", notes, 1)
+    opening_table(ax, 13700, y - 100)
+    return figure
+
+
+# --- Elevations -------------------------------------------------------------
+def elevation_lines(model, view, right):
+    """Visible edges of the building seen from `view`, as (h, z) point lists.
+
+    The solids are rotated so `right` becomes X, up stays up as Y and `view`
+    points at the viewer along Z, then TechDraw removes the hidden lines.
+    """
+    walls = [wall.Shape for wall in model["walls"].values()]
+    walls = walls[0].multiFuse(walls[1:]).removeSplitter()  # no joint lines at corners
+    others = [model["slab"], *model["windows"], *model["doors"], model["roof"]]
+    shape = Part.makeCompound([walls, *(obj.Shape.copy() for obj in others)])
+    rotation = Rotation(right, Vector(0, 0, 1), view, "ZXY").inverted()
+    shape.transformShape(Placement(Vector(), rotation).toMatrix())
+    projection = TechDraw.projectEx(shape, Vector(0, 0, 1))
+    lines = []
+    for compound in (projection[0], projection[3]):  # visible hard edges and outlines
+        for edge in compound.Edges if compound else []:
+            lines.append([(v.x, v.y) for v in edge.discretize(QuasiDeflection=2)])
+    return lines
+
+
+def level_mark(ax, x, z, text):
+    """Downward triangle on a level, with its text to the left."""
+    ax.add_patch(Polygon([(x, z), (x - 90, z + 150), (x + 90, z + 150)], closed=True,
+                         fc="#222", ec="#222", lw=0.4))  # fmt: skip
+    ax.plot([x - 250, x + 450], [z, z], color="#222", lw=0.4)
+    ax.text(x - 200, z + 90, text, ha="right", va="center", fontsize=7, color="#222")
+
+
+def draw_elevation(ax, model, key, ox, oy):
+    """One elevation, with the outer wall corner on its left at floor level at ox, oy."""
+    title, wall_name, view, right = ELEVATIONS[key]
+    h0 = min(Vector(x, y, 0).dot(right) for x in (0, LENGTH) for y in (0, DEPTH))
+    width = LENGTH if is_along_x(wall_name) else DEPTH
+    for points in elevation_lines(model, view, right):
+        xs, zs = zip(*points)
+        ax.plot([ox + h - h0 for h in xs], [oy + z for z in zs], color="#222", lw=0.45)
+
+    ground = oy - SLAB_T
+    ax.plot([ox - EAVE - 900, ox + width + EAVE + 900], [ground, ground], color="#111", lw=1.6)
+
+    mark_x = ox - EAVE - 700
+    ridge = model["roof"].Shape.BoundBox.ZMax
+    for z, text in ((0, "N.P.T. ±0.00"), (WALL_H, f"+{metres(WALL_H)}"),
+                    (ridge, f"Cumbrera +{metres(ridge)}")):  # fmt: skip
+        level_mark(ax, mark_x, oy + z, text)
+
+    openings = [(name, host, centre, height + sill, "#2a6fa8")
+                for name, (_, host, centre, _, height, sill) in WINDOWS.items()]
+    openings += [(name, host, centre, height, "#8a4b1f")
+                 for name, (host, centre, _, height, _, _) in DOORS.items()]  # fmt: skip
+    (x0, y0), _, _ = WALLS[wall_name]
+    for name, host, centre, head, colour in openings:
+        if host != wall_name:
+            continue
+        point = Vector(centre, y0, 0) if is_along_x(host) else Vector(x0, centre, 0)
+        ax.text(ox + point.dot(right) - h0, oy + head + 200, name.split()[0], ha="center",
+                va="center", fontsize=6.5, color=colour)  # fmt: skip
+
+    dimension(ax, (ox, ground), (ox + width, ground), -700)
+    ax.text(ox + width / 2, ground - 1450, title, ha="center", va="center", fontsize=10,
+            fontweight="bold", color="#111")  # fmt: skip
+    ax.text(ox + width / 2, ground - 1850, f"Escala 1:{SCALE}", ha="center", va="center",
+            fontsize=7, color="#444")  # fmt: skip
+
+
+def elevation_sheet(model, upper, lower, sheet):
+    figure, ax = new_sheet(0, 0)
+    draw_elevation(ax, model, upper, 2900, 9700)
+    draw_elevation(ax, model, lower, 2900, 2500)
+    notes = ["Niveles en metros", "N.P.T.: nivel de piso terminado",
+             "Marcas de vanos según el cuadro de la hoja 1"]  # fmt: skip
+    title_block(ax, 16700, 6900, "Fachadas", notes, sheet)
+    return figure
+
+
+def write_drawings(model, path):
+    """Floor plan, then south and north, then east and west elevations."""
+    with PdfPages(path) as pdf:
+        for figure in (
+            plan_sheet(model),
+            elevation_sheet(model, "South", "North", 2),
+            elevation_sheet(model, "East", "West", 3),
+        ):
+            pdf.savefig(figure)
+            plt.close(figure)
 
 
 def write_ifc(model, path):
-    """Export IFC, then repair two gaps in FreeCAD's exporter.
+    """Export IFC, then repair three gaps in FreeCAD's exporter.
 
     It creates openings but no IfcRelFillsElement, so each door and window is
     linked to its opening here. It also writes OverallWidth and OverallHeight
-    in millimetres although the file's length unit is the metre.
+    in millimetres although the file's length unit is the metre. And it marks
+    every door as single swing, so sliding doors are corrected.
     """
     exportIFC.export([model["project"]], str(path))
     ifc = ifcopenshell.open(str(path))
@@ -487,10 +814,13 @@ def write_ifc(model, path):
         )
         element.OverallWidth /= 1000
         element.OverallHeight /= 1000
+        if element.is_a("IfcDoor") and not DOORS[element.Name][4]:
+            element.OperationType = "DOUBLE_DOOR_SLIDING"
     ifc.write(str(path))
 
 
 def main():
+    opening_types()  # fail early on inconsistent door and window tags
     doc = FreeCAD.newDocument("ThreeBedroomHouse")
     doc.CreatedBy = CREATOR
     model = build(doc)
@@ -500,7 +830,7 @@ def main():
     doc.saveAs(str(HERE / f"{SLUG}.FCStd"))
     write_ifc(model, HERE / f"{SLUG}.ifc")
     write_schedule(model, HERE / f"{SLUG}-schedule.csv")
-    write_plan(model, HERE / f"{SLUG}-plan.pdf")
+    write_drawings(model, HERE / f"{SLUG}-plan.pdf")
     print("DONE")
     return doc, model
 

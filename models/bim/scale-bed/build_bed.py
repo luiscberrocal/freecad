@@ -50,6 +50,16 @@ DERIVED = [
     ("Bed width", "=mt_width + 2 * bd_offset", "bd_width"),
 ]
 
+# Connecting pegs. These are print sizes in mm and do NOT change with the scale.
+# Pegs stick out of the mattress (down) and the headboard (towards the foot);
+# the bed has the matching holes. Clearance is added to the hole diameter.
+PEGS = [
+    ("Peg diameter", "2 mm", "pg_diameter", "Must stay below the platform thickness"),
+    ("Peg length", "3 mm", "pg_length", ""),
+    ("Peg clearance", "0.3 mm", "pg_clearance", "Hole diameter = peg + clearance"),
+    ("Hole extra depth", "0.5 mm", "pg_depth_extra", "Hole depth = peg length + this"),
+]
+
 G = "<<globals>>."
 
 
@@ -79,7 +89,18 @@ def build_sheet(doc):
         sheet.setAlias(f"C{row}", alias)
         sheet.set(f"D{row}", "Derived")
         row += 1
-    sheet.setColumnWidth("A", 160)
+    row += 1
+    sheet.set(f"A{row}", "Pegs (print mm, not scaled)")
+    sheet.setStyle(f"A{row}", "bold")
+    row += 1
+    for label, value, alias, note in PEGS:
+        sheet.set(f"A{row}", label)
+        sheet.set(f"B{row}", f"={value}")
+        sheet.set(f"C{row}", f"=B{row}")
+        sheet.setAlias(f"C{row}", alias)
+        sheet.set(f"D{row}", note)
+        row += 1
+    sheet.setColumnWidth("A", 200)
     sheet.setColumnWidth("D", 280)
     return sheet
 
@@ -98,6 +119,45 @@ def add_box(body, name, length, width, height, x="0", y="0", z="0"):
     ):
         box.setExpression(prop, expr)
     return box
+
+
+# Cylinder axis directions: the feature's local Z is rotated onto this axis.
+AXIS_UP = FreeCAD.Rotation()
+AXIS_TO_FOOT = FreeCAD.Rotation(FreeCAD.Vector(1, 0, 0), -90)  # local Z -> +Y
+
+
+def add_cylinder(body, kind, name, radius, height, rotation, x, y, z):
+    """Additive or subtractive cylinder starting at (x, y, z) along `rotation`."""
+    cyl = body.newObject(f"PartDesign::{kind}Cylinder", name)
+    cyl.MapMode = "Deactivated"
+    cyl.Placement = FreeCAD.Placement(FreeCAD.Vector(), rotation)
+    for prop, expr in (
+        ("Radius", radius),
+        ("Height", height),
+        ("Placement.Base.x", x),
+        ("Placement.Base.y", y),
+        ("Placement.Base.z", z),
+    ):
+        cyl.setExpression(prop, expr)
+    return cyl
+
+
+PEG_R = f"{G}pg_diameter / 2"
+HOLE_R = f"({G}pg_diameter + {G}pg_clearance) / 2"
+HOLE_DEPTH = f"{G}pg_length + {G}pg_depth_extra"
+OVERSHOOT = 0.1  # mm past the open face so the cut never leaves a skin
+
+# Mattress pegs: on the bed's centre line, a quarter of the way in from each end.
+MATTRESS_PEGS = [
+    ("Head", f"{G}bd_width / 2", f"{G}bd_length * 0.25"),
+    ("Foot", f"{G}bd_width / 2", f"{G}bd_length * 0.75"),
+]
+# Headboard pegs: into the platform's head face, at mid-thickness.
+HEADBOARD_PEGS = [
+    ("Left", f"{G}bd_width * 0.25"),
+    ("Right", f"{G}bd_width * 0.75"),
+]
+HEADBOARD_PEG_Z = f"{G}bd_post_height - {G}bd_body_height / 2"
 
 
 def build_mattress(doc):
@@ -121,6 +181,11 @@ def build_mattress(doc):
     fillet = body.newObject("PartDesign::Fillet", "MattressCorners")
     fillet.Base = (box, vertical)
     fillet.setExpression("Radius", f"{G}mt_fillet")
+    for name, x, y in MATTRESS_PEGS:
+        add_cylinder(
+            body, "Additive", f"Peg{name}", PEG_R, f"{G}pg_length", AXIS_UP,
+            x, y, f"{G}bd_post_height - {G}pg_length",
+        )
     return body
 
 
@@ -151,6 +216,18 @@ def build_bed(doc):
             x=x,
             y=y,
         )
+    for name, x, y in MATTRESS_PEGS:
+        add_cylinder(
+            body, "Subtractive", f"MattressHole{name}", HOLE_R,
+            f"{HOLE_DEPTH} + {OVERSHOOT} mm", AXIS_UP,
+            x, y, f"{G}bd_post_height - ({HOLE_DEPTH})",
+        )
+    for name, x in HEADBOARD_PEGS:
+        add_cylinder(
+            body, "Subtractive", f"HeadboardHole{name}", HOLE_R,
+            f"{HOLE_DEPTH} + {OVERSHOOT} mm", AXIS_TO_FOOT,
+            x, f"-{OVERSHOOT} mm", HEADBOARD_PEG_Z,
+        )
     return body
 
 
@@ -164,6 +241,11 @@ def build_headboard(doc):
         f"{G}hb_height",
         y=f"-{G}hb_thickness",
     )
+    for name, x in HEADBOARD_PEGS:
+        add_cylinder(
+            body, "Additive", f"Peg{name}", PEG_R, f"{G}pg_length", AXIS_TO_FOOT,
+            x, "0", HEADBOARD_PEG_Z,
+        )
     return body
 
 

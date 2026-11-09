@@ -44,7 +44,27 @@ recompute; the bodies follow.
 | Headboard thickness | 5 cm | `hb_thickness` |
 
 At 1:20 the printed parts are about 48 x 94 x 7.5 mm (mattress),
-50 x 96 x 12.5 mm (bed) and 50 x 2.5 x 50 mm (headboard).
+50 x 96 x 12.5 mm (bed) and 50 x 2.5 x 50 mm (headboard), plus the pegs.
+
+## Pegs
+
+The mattress has two pegs underneath, on the centre line a quarter of the way
+in from each end. The headboard has two pegs that point into the head end of
+the bed platform. The bed has the matching holes.
+
+Peg sizes are print millimetres and stay the same at every scale:
+
+| Parameter | Default | Alias |
+|---|---|---|
+| Peg diameter | 2 mm | `pg_diameter` |
+| Peg length | 3 mm | `pg_length` |
+| Peg clearance | 0.3 mm | `pg_clearance` |
+| Hole extra depth | 0.5 mm | `pg_depth_extra` |
+
+Each hole's diameter is the peg diameter plus `pg_clearance`, and its depth is
+the peg length plus `pg_depth_extra`. If the pegs are too tight or too loose,
+change `pg_clearance`. The headboard pegs go into the platform, so keep
+`pg_diameter` well below the platform thickness: 5 mm at 1:20.
 
 ## Rebuilding
 
@@ -59,6 +79,9 @@ them, and it also overwrites any edits made directly in the FCStd:
 ## Printing notes
 
 - Print the bed upside down (platform top on the build plate) so the posts need no supports.
-- Print the headboard lying flat.
+- Print the mattress upside down, so its pegs point up.
+- Print the headboard lying on its back, so its pegs point up.
+- `build_bed.py` overwrites the three `.3mf` files, so save Bambu Studio or
+  other slicer projects under different names.
 - Thin features at 1:20: the 2 cm offset becomes a 1 mm ledge, and the 5 cm
   headboard becomes a 2.5 mm board.

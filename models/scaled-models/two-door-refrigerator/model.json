@@ -1,0 +1,229 @@
+{
+  "title": "Two door refrigerator",
+  "slug": "two-door-refrigerator",
+  "scale": "1:20",
+  "bonding": "glue",
+  "description": "Top-freezer refrigerator with two doors, bar handles, a door gap line and a recessed kick plate",
+  "tags": [
+    "refrigerator",
+    "kitchen",
+    "appliance"
+  ],
+  "parameters": [
+    {
+      "alias": "body_w",
+      "label": "Width (front)",
+      "value": "67 cm"
+    },
+    {
+      "alias": "body_d",
+      "label": "Depth",
+      "value": "61 cm",
+      "note": "Back to door front, without handles"
+    },
+    {
+      "alias": "body_h",
+      "label": "Height",
+      "value": "175 cm"
+    },
+    {
+      "alias": "freezer_h",
+      "label": "Freezer door height",
+      "value": "51 cm"
+    },
+    {
+      "alias": "edge_r",
+      "label": "Edge fillet radius",
+      "value": "2 cm"
+    },
+    {
+      "alias": "gap_h",
+      "label": "Door gap height",
+      "value": "1.6 cm"
+    },
+    {
+      "alias": "gap_d",
+      "label": "Door gap depth",
+      "value": "1.6 cm"
+    },
+    {
+      "alias": "kick_h",
+      "label": "Kick plate height",
+      "value": "8 cm"
+    },
+    {
+      "alias": "kick_d",
+      "label": "Kick plate recess",
+      "value": "3 cm"
+    },
+    {
+      "alias": "handle_w",
+      "label": "Handle width",
+      "value": "2.5 cm"
+    },
+    {
+      "alias": "handle_d",
+      "label": "Handle projection",
+      "value": "3 cm"
+    },
+    {
+      "alias": "handle_x",
+      "label": "Handle inset from left side",
+      "value": "6 cm"
+    },
+    {
+      "alias": "handle_m",
+      "label": "Handle margin from door edge",
+      "value": "6 cm"
+    },
+    {
+      "alias": "fz_handle_l",
+      "label": "Freezer handle length",
+      "value": "30 cm"
+    },
+    {
+      "alias": "fr_handle_l",
+      "label": "Fridge handle length",
+      "value": "60 cm"
+    }
+  ],
+  "derived": [
+    {
+      "alias": "freezer_bot",
+      "label": "Freezer door bottom",
+      "formula": "body_h - freezer_h"
+    },
+    {
+      "alias": "gap_bot",
+      "label": "Fridge door top",
+      "formula": "freezer_bot - gap_h"
+    },
+    {
+      "alias": "fz_handle_z",
+      "label": "Freezer handle bottom",
+      "formula": "freezer_bot + handle_m"
+    },
+    {
+      "alias": "fr_handle_z",
+      "label": "Fridge handle bottom",
+      "formula": "gap_bot - handle_m - fr_handle_l"
+    }
+  ],
+  "parts": [
+    {
+      "name": "Refrigerator",
+      "features": [
+        {
+          "name": "Cabinet",
+          "type": "box",
+          "length": "body_w",
+          "width": "body_d",
+          "height": "body_h",
+          "fillet": {
+            "radius": "edge_r",
+            "edges": "all"
+          }
+        },
+        {
+          "name": "DoorGap",
+          "type": "box",
+          "op": "cut",
+          "length": "body_w + 2 * edge_r",
+          "width": "gap_d + edge_r",
+          "height": "gap_h",
+          "at": [
+            "-edge_r",
+            "-edge_r",
+            "gap_bot"
+          ]
+        },
+        {
+          "name": "KickPlate",
+          "type": "box",
+          "op": "cut",
+          "length": "body_w + 2 * edge_r",
+          "width": "kick_d + edge_r",
+          "height": "kick_h + edge_r",
+          "at": [
+            "-edge_r",
+            "-edge_r",
+            "-edge_r"
+          ]
+        },
+        {
+          "name": "FreezerHandle",
+          "type": "box",
+          "length": "handle_w",
+          "width": "handle_d",
+          "height": "fz_handle_l",
+          "at": [
+            "handle_x",
+            "-handle_d",
+            "fz_handle_z"
+          ]
+        },
+        {
+          "name": "FridgeHandle",
+          "type": "box",
+          "length": "handle_w",
+          "width": "handle_d",
+          "height": "fr_handle_l",
+          "at": [
+            "handle_x",
+            "-handle_d",
+            "fr_handle_z"
+          ]
+        }
+      ]
+    }
+  ],
+  "plan": {
+    "dimensions": [
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "freezer_bot",
+        "to": "body_h"
+      },
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "0",
+        "to": "kick_h"
+      },
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "0",
+        "to": "gap_bot"
+      },
+      {
+        "view": "right",
+        "axis": "y",
+        "from": "0",
+        "to": "body_d"
+      }
+    ]
+  },
+  "usage": [
+    {
+      "session": "1df7f30d-c062-4719-8515-fb45b2ca4d39",
+      "started": "2026-11-10T15:04:45+00:00",
+      "ended": "2026-11-10T15:07:05+00:00",
+      "elapsed_s": 140,
+      "requests": 8,
+      "models": {
+        "claude-opus-5-5": 8
+      },
+      "tokens": {
+        "input": 18,
+        "output": 7584,
+        "cache_write": 17012,
+        "cache_read": 812973,
+        "total": 837587
+      },
+      "cost_usd": 0.4504,
+      "unpriced_models": []
+    }
+  ]
+}

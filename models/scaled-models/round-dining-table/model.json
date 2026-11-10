@@ -1,0 +1,236 @@
+{
+  "title": "Round dining table",
+  "slug": "round-dining-table",
+  "scale": "1:20",
+  "bonding": "pegs",
+  "description": "Round four-legged dining table, 1.5 m diameter, with a simple chair",
+  "tags": [
+    "table",
+    "chair",
+    "furniture",
+    "dining"
+  ],
+  "parameters": [
+    {
+      "alias": "top_d",
+      "label": "Top diameter",
+      "value": "150 cm"
+    },
+    {
+      "alias": "top_t",
+      "label": "Top thickness",
+      "value": "4 cm"
+    },
+    {
+      "alias": "table_h",
+      "label": "Table height",
+      "value": "75 cm",
+      "note": "Floor to top"
+    },
+    {
+      "alias": "leg_w",
+      "label": "Table leg width",
+      "value": "6 cm",
+      "note": "Square section"
+    },
+    {
+      "alias": "leg_r",
+      "label": "Table leg radius",
+      "value": "55 cm",
+      "note": "Centre of table to leg centre"
+    },
+    {
+      "alias": "seat_w",
+      "label": "Seat width",
+      "value": "45 cm"
+    },
+    {
+      "alias": "seat_dp",
+      "label": "Seat depth",
+      "value": "45 cm"
+    },
+    {
+      "alias": "seat_h",
+      "label": "Seat height",
+      "value": "45 cm",
+      "note": "Floor to seat top"
+    },
+    {
+      "alias": "seat_t",
+      "label": "Seat thickness",
+      "value": "3 cm"
+    },
+    {
+      "alias": "cleg_w",
+      "label": "Chair leg width",
+      "value": "4 cm",
+      "note": "Square section"
+    },
+    {
+      "alias": "back_h",
+      "label": "Chair back height",
+      "value": "90 cm",
+      "note": "Floor to top of backrest"
+    },
+    {
+      "alias": "back_t",
+      "label": "Backrest thickness",
+      "value": "5 cm"
+    },
+    {
+      "alias": "chair_x",
+      "label": "Chair front edge X",
+      "value": "60 cm",
+      "note": "Distance from table centre to seat front"
+    }
+  ],
+  "derived": [
+    {
+      "alias": "leg_h",
+      "label": "Table leg height",
+      "formula": "table_h - top_t"
+    },
+    {
+      "alias": "cleg_h",
+      "label": "Chair leg height",
+      "formula": "seat_h - seat_t"
+    },
+    {
+      "alias": "chair_xb",
+      "label": "Chair back edge X",
+      "formula": "chair_x + seat_dp"
+    }
+  ],
+  "parts": [
+    {
+      "name": "Table",
+      "features": [
+        {
+          "name": "Top",
+          "type": "cylinder",
+          "radius": "top_d / 2",
+          "height": "top_t",
+          "at": [
+            "0",
+            "0",
+            "leg_h"
+          ]
+        },
+        {
+          "name": "Leg",
+          "type": "box",
+          "length": "leg_w",
+          "width": "leg_w",
+          "height": "leg_h",
+          "at": [
+            "leg_r - leg_w / 2",
+            "-leg_w / 2",
+            "0"
+          ],
+          "polar": {
+            "count": 4,
+            "start_deg": 45
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chair",
+      "features": [
+        {
+          "name": "Seat",
+          "type": "box",
+          "length": "seat_dp",
+          "width": "seat_w",
+          "height": "seat_t",
+          "at": [
+            "chair_x",
+            "-seat_w / 2",
+            "cleg_h"
+          ]
+        },
+        {
+          "name": "LegFL",
+          "type": "box",
+          "length": "cleg_w",
+          "width": "cleg_w",
+          "height": "cleg_h",
+          "at": [
+            "chair_x",
+            "-seat_w / 2",
+            "0"
+          ]
+        },
+        {
+          "name": "LegFR",
+          "type": "box",
+          "length": "cleg_w",
+          "width": "cleg_w",
+          "height": "cleg_h",
+          "at": [
+            "chair_x",
+            "seat_w / 2 - cleg_w",
+            "0"
+          ]
+        },
+        {
+          "name": "LegBL",
+          "type": "box",
+          "length": "cleg_w",
+          "width": "cleg_w",
+          "height": "cleg_h",
+          "at": [
+            "chair_xb - cleg_w",
+            "-seat_w / 2",
+            "0"
+          ]
+        },
+        {
+          "name": "LegBR",
+          "type": "box",
+          "length": "cleg_w",
+          "width": "cleg_w",
+          "height": "cleg_h",
+          "at": [
+            "chair_xb - cleg_w",
+            "seat_w / 2 - cleg_w",
+            "0"
+          ]
+        },
+        {
+          "name": "Back",
+          "type": "box",
+          "length": "back_t",
+          "width": "seat_w",
+          "height": "back_h - seat_h",
+          "at": [
+            "chair_xb - back_t",
+            "-seat_w / 2",
+            "seat_h"
+          ]
+        }
+      ]
+    }
+  ],
+  "usage": [
+    {
+      "session": "3a21cca8-39dc-4890-9501-8fb8aa275ff8",
+      "started": "2026-11-10T12:58:32+00:00",
+      "ended": "2026-11-10T13:00:16+00:00",
+      "elapsed_s": 104,
+      "requests": 10,
+      "models": {
+        "claude-opus-5-5": 10
+      },
+      "tokens": {
+        "input": 22,
+        "output": 6370,
+        "cache_write": 31813,
+        "cache_read": 507192,
+        "total": 545397
+      },
+      "cost_usd": 0.4834,
+      "unpriced_models": []
+    }
+  ]
+}

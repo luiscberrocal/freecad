@@ -96,6 +96,10 @@ Each piece has its own `.3mf`, already turned to its support-free print orientat
 | Stove / Grate | glue | glue (1 mm² contact) |
 | Stove / Grate | glue | glue (1 mm² contact) |
 
+## Plan
+
+[`five-burner-stove-plan.pdf`](five-burner-stove-plan.pdf) is an A3 sheet with the front, top and right views, an isometric view and 7 dimensions in real-world cm, drawn at 1:15 of the real size. The same sheet is the TechDraw page `Plan` in the FCStd. Its views follow the bodies, but the dimension text is set at build time, so rebuild after changing sizes.
+
 ## Rebuilding
 
 ```sh

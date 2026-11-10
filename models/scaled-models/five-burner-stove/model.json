@@ -741,6 +741,34 @@
       ]
     }
   ],
+  "plan": {
+    "dimensions": [
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "0",
+        "to": "cook_h"
+      },
+      {
+        "view": "right",
+        "axis": "z",
+        "from": "cook_h",
+        "to": "cook_h + panel_h"
+      },
+      {
+        "view": "top",
+        "axis": "x",
+        "from": "-burner_x",
+        "to": "burner_x"
+      },
+      {
+        "view": "top",
+        "axis": "y",
+        "from": "burn_yf",
+        "to": "burn_yb"
+      }
+    ]
+  },
   "usage": [
     {
       "session": "fdb3d56a-ece9-4708-86f8-9b9afbdac079",

@@ -1,0 +1,473 @@
+{
+  "title": "L-shaped sofa",
+  "slug": "l-shaped-sofa",
+  "scale": "1:20",
+  "bonding": "glue",
+  "description": "Three-seat sofa with a right-hand chaise longue, separate seat and back cushions, left arm",
+  "tags": [
+    "sofa",
+    "furniture",
+    "living-room"
+  ],
+  "parameters": [
+    {
+      "alias": "sofa_w",
+      "label": "Overall width",
+      "value": "270 cm"
+    },
+    {
+      "alias": "sofa_d",
+      "label": "Sofa depth",
+      "value": "95 cm"
+    },
+    {
+      "alias": "chaise_w",
+      "label": "Chaise width",
+      "value": "90 cm"
+    },
+    {
+      "alias": "chaise_d",
+      "label": "Chaise depth",
+      "value": "165 cm",
+      "note": "Back to chaise front"
+    },
+    {
+      "alias": "leg_h",
+      "label": "Leg height",
+      "value": "10 cm"
+    },
+    {
+      "alias": "leg_w",
+      "label": "Leg width",
+      "value": "5 cm"
+    },
+    {
+      "alias": "leg_in",
+      "label": "Leg inset",
+      "value": "4 cm"
+    },
+    {
+      "alias": "base_h",
+      "label": "Base frame height",
+      "value": "23 cm"
+    },
+    {
+      "alias": "arm_w",
+      "label": "Arm width",
+      "value": "20 cm"
+    },
+    {
+      "alias": "arm_h",
+      "label": "Arm height",
+      "value": "62 cm",
+      "note": "Floor to arm top"
+    },
+    {
+      "alias": "back_t",
+      "label": "Backrest thickness",
+      "value": "20 cm"
+    },
+    {
+      "alias": "back_h",
+      "label": "Backrest height",
+      "value": "85 cm",
+      "note": "Floor to back top"
+    },
+    {
+      "alias": "seat_t",
+      "label": "Seat cushion thickness",
+      "value": "12 cm"
+    },
+    {
+      "alias": "bc_t",
+      "label": "Back cushion thickness",
+      "value": "18 cm"
+    },
+    {
+      "alias": "bc_h",
+      "label": "Back cushion height",
+      "value": "45 cm"
+    },
+    {
+      "alias": "edge_r",
+      "label": "Edge rounding",
+      "value": "3 cm"
+    },
+    {
+      "alias": "cush_r",
+      "label": "Cushion rounding",
+      "value": "2 cm"
+    }
+  ],
+  "derived": [
+    {
+      "alias": "base_top",
+      "label": "Base top height",
+      "formula": "leg_h + base_h"
+    },
+    {
+      "alias": "seat_h",
+      "label": "Seat height",
+      "formula": "base_top + seat_t"
+    },
+    {
+      "alias": "main_w",
+      "label": "Main seat width",
+      "formula": "sofa_w - chaise_w - arm_w"
+    },
+    {
+      "alias": "seat_w",
+      "label": "Seat cushion width",
+      "formula": "main_w / 2"
+    },
+    {
+      "alias": "ch_x",
+      "label": "Chaise left edge",
+      "formula": "sofa_w - chaise_w"
+    },
+    {
+      "alias": "ch_ext",
+      "label": "Chaise extension",
+      "formula": "chaise_d - sofa_d"
+    },
+    {
+      "alias": "ch_y",
+      "label": "Chaise front edge",
+      "formula": "sofa_d - chaise_d"
+    },
+    {
+      "alias": "bc_y",
+      "label": "Back cushion front",
+      "formula": "sofa_d - back_t - bc_t"
+    }
+  ],
+  "parts": [
+    {
+      "name": "Frame",
+      "features": [
+        {
+          "name": "Base",
+          "type": "box",
+          "length": "sofa_w",
+          "width": "sofa_d",
+          "height": "base_h",
+          "at": [
+            "0",
+            "0",
+            "leg_h"
+          ]
+        },
+        {
+          "name": "ChaiseBase",
+          "type": "box",
+          "length": "chaise_w",
+          "width": "ch_ext",
+          "height": "base_h",
+          "at": [
+            "ch_x",
+            "ch_y",
+            "leg_h"
+          ]
+        },
+        {
+          "name": "Back",
+          "type": "box",
+          "length": "sofa_w",
+          "width": "back_t",
+          "height": "back_h - leg_h",
+          "at": [
+            "0",
+            "sofa_d - back_t",
+            "leg_h"
+          ],
+          "fillet": {
+            "radius": "edge_r",
+            "edges": [
+              "front-top",
+              "back-top"
+            ]
+          }
+        },
+        {
+          "name": "Arm",
+          "type": "box",
+          "length": "arm_w",
+          "width": "sofa_d - back_t",
+          "height": "arm_h - leg_h",
+          "at": [
+            "0",
+            "0",
+            "leg_h"
+          ],
+          "fillet": {
+            "radius": "edge_r",
+            "edges": [
+              "left-top",
+              "right-top",
+              "front-top"
+            ]
+          }
+        },
+        {
+          "name": "LegFrontLeft",
+          "type": "box",
+          "length": "leg_w",
+          "width": "leg_w",
+          "height": "leg_h",
+          "at": [
+            "leg_in",
+            "leg_in",
+            "0"
+          ]
+        },
+        {
+          "name": "LegBackLeft",
+          "type": "box",
+          "length": "leg_w",
+          "width": "leg_w",
+          "height": "leg_h",
+          "at": [
+            "leg_in",
+            "sofa_d - leg_in - leg_w",
+            "0"
+          ]
+        },
+        {
+          "name": "LegBackRight",
+          "type": "box",
+          "length": "leg_w",
+          "width": "leg_w",
+          "height": "leg_h",
+          "at": [
+            "sofa_w - leg_in - leg_w",
+            "sofa_d - leg_in - leg_w",
+            "0"
+          ]
+        },
+        {
+          "name": "LegChaiseRight",
+          "type": "box",
+          "length": "leg_w",
+          "width": "leg_w",
+          "height": "leg_h",
+          "at": [
+            "sofa_w - leg_in - leg_w",
+            "ch_y + leg_in",
+            "0"
+          ]
+        },
+        {
+          "name": "LegChaiseLeft",
+          "type": "box",
+          "length": "leg_w",
+          "width": "leg_w",
+          "height": "leg_h",
+          "at": [
+            "ch_x + leg_in",
+            "ch_y + leg_in",
+            "0"
+          ]
+        },
+        {
+          "name": "LegFrontMid",
+          "type": "box",
+          "length": "leg_w",
+          "width": "leg_w",
+          "height": "leg_h",
+          "at": [
+            "ch_x - leg_in - leg_w",
+            "leg_in",
+            "0"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "SeatLeft",
+      "features": [
+        {
+          "name": "Cushion",
+          "type": "box",
+          "length": "seat_w",
+          "width": "bc_y",
+          "height": "seat_t",
+          "at": [
+            "arm_w",
+            "0",
+            "base_top"
+          ],
+          "fillet": {
+            "radius": "cush_r",
+            "edges": [
+              "front-top"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "SeatMid",
+      "features": [
+        {
+          "name": "Cushion",
+          "type": "box",
+          "length": "seat_w",
+          "width": "bc_y",
+          "height": "seat_t",
+          "at": [
+            "arm_w + seat_w",
+            "0",
+            "base_top"
+          ],
+          "fillet": {
+            "radius": "cush_r",
+            "edges": [
+              "front-top"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Chaise",
+      "features": [
+        {
+          "name": "Cushion",
+          "type": "box",
+          "length": "chaise_w",
+          "width": "bc_y - ch_y",
+          "height": "seat_t",
+          "at": [
+            "ch_x",
+            "ch_y",
+            "base_top"
+          ],
+          "fillet": {
+            "radius": "cush_r",
+            "edges": [
+              "front-top"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "BackLeft",
+      "features": [
+        {
+          "name": "Cushion",
+          "type": "box",
+          "length": "seat_w",
+          "width": "bc_t",
+          "height": "bc_h",
+          "at": [
+            "arm_w",
+            "bc_y",
+            "base_top"
+          ],
+          "fillet": {
+            "radius": "cush_r",
+            "edges": [
+              "front-top"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "BackMid",
+      "features": [
+        {
+          "name": "Cushion",
+          "type": "box",
+          "length": "seat_w",
+          "width": "bc_t",
+          "height": "bc_h",
+          "at": [
+            "arm_w + seat_w",
+            "bc_y",
+            "base_top"
+          ],
+          "fillet": {
+            "radius": "cush_r",
+            "edges": [
+              "front-top"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "BackRight",
+      "features": [
+        {
+          "name": "Cushion",
+          "type": "box",
+          "length": "chaise_w",
+          "width": "bc_t",
+          "height": "bc_h",
+          "at": [
+            "ch_x",
+            "bc_y",
+            "base_top"
+          ],
+          "fillet": {
+            "radius": "cush_r",
+            "edges": [
+              "front-top"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "plan": {
+    "dimensions": [
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "0",
+        "to": "seat_h"
+      },
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "0",
+        "to": "arm_h"
+      },
+      {
+        "view": "top",
+        "axis": "x",
+        "from": "ch_x",
+        "to": "sofa_w"
+      },
+      {
+        "view": "top",
+        "axis": "y",
+        "from": "0",
+        "to": "sofa_d"
+      }
+    ]
+  },
+  "usage": [
+    {
+      "session": "764f05a3-b4c8-4b38-b6fd-7efcf739fb78",
+      "started": "2026-11-10T15:30:04+00:00",
+      "ended": "2026-11-10T15:32:37+00:00",
+      "elapsed_s": 153,
+      "requests": 7,
+      "models": {
+        "claude-opus-5-5": 7
+      },
+      "tokens": {
+        "input": 14,
+        "output": 9727,
+        "cache_write": 32457,
+        "cache_read": 353500,
+        "total": 395698
+      },
+      "cost_usd": 0.525,
+      "unpriced_models": []
+    }
+  ]
+}

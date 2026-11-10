@@ -1,0 +1,765 @@
+{
+  "title": "Five Burner Stove",
+  "slug": "five-burner-stove",
+  "scale": "1:20",
+  "bonding": "glue",
+  "description": "Freestanding range, 5 gas burners (centre pancake burner), oven, display backguard and steel pot grate",
+  "tags": [
+    "stove",
+    "kitchen",
+    "appliance"
+  ],
+  "parameters": [
+    {
+      "alias": "stove_w",
+      "label": "Stove width (side to side)",
+      "value": "63 cm"
+    },
+    {
+      "alias": "stove_d",
+      "label": "Stove depth (front to back)",
+      "value": "75 cm"
+    },
+    {
+      "alias": "cook_h",
+      "label": "Cooktop height",
+      "value": "92 cm",
+      "note": "Floor to cooktop surface"
+    },
+    {
+      "alias": "panel_h",
+      "label": "Display panel height",
+      "value": "20 cm",
+      "note": "Backguard above the cooktop"
+    },
+    {
+      "alias": "panel_t",
+      "label": "Display panel thickness",
+      "value": "6 cm"
+    },
+    {
+      "alias": "disp_w",
+      "label": "Display width",
+      "value": "30 cm"
+    },
+    {
+      "alias": "disp_h",
+      "label": "Display height",
+      "value": "8 cm"
+    },
+    {
+      "alias": "disp_t",
+      "label": "Display projection",
+      "value": "1.6 cm"
+    },
+    {
+      "alias": "toe_h",
+      "label": "Toe kick height",
+      "value": "10 cm"
+    },
+    {
+      "alias": "toe_d",
+      "label": "Toe kick depth",
+      "value": "5 cm"
+    },
+    {
+      "alias": "door_bot",
+      "label": "Oven door bottom",
+      "value": "12 cm"
+    },
+    {
+      "alias": "door_top",
+      "label": "Oven door top",
+      "value": "70 cm"
+    },
+    {
+      "alias": "door_t",
+      "label": "Oven door thickness",
+      "value": "2.5 cm",
+      "note": "Proud of the body front"
+    },
+    {
+      "alias": "door_side",
+      "label": "Oven door side margin",
+      "value": "3 cm"
+    },
+    {
+      "alias": "win_m",
+      "label": "Oven window side margin",
+      "value": "9 cm"
+    },
+    {
+      "alias": "win_z0",
+      "label": "Oven window bottom",
+      "value": "28 cm"
+    },
+    {
+      "alias": "win_z1",
+      "label": "Oven window top",
+      "value": "58 cm"
+    },
+    {
+      "alias": "win_dep",
+      "label": "Oven window recess",
+      "value": "1.6 cm"
+    },
+    {
+      "alias": "hdl_z",
+      "label": "Handle height",
+      "value": "64 cm"
+    },
+    {
+      "alias": "hdl_off",
+      "label": "Handle projection from door",
+      "value": "4 cm"
+    },
+    {
+      "alias": "hdl_post",
+      "label": "Handle bar height",
+      "value": "2.5 cm"
+    },
+    {
+      "alias": "hdl_m",
+      "label": "Handle inset from door edge",
+      "value": "6 cm"
+    },
+    {
+      "alias": "knob_r",
+      "label": "Knob radius",
+      "value": "2 cm"
+    },
+    {
+      "alias": "knob_l",
+      "label": "Knob length",
+      "value": "2.5 cm"
+    },
+    {
+      "alias": "knob_z",
+      "label": "Knob height",
+      "value": "81 cm"
+    },
+    {
+      "alias": "knob_dx",
+      "label": "Knob spacing",
+      "value": "11 cm"
+    },
+    {
+      "alias": "burner_x",
+      "label": "Side burner offset from centre",
+      "value": "16 cm"
+    },
+    {
+      "alias": "burn_yf",
+      "label": "Front burner row (from front)",
+      "value": "16 cm"
+    },
+    {
+      "alias": "burn_yc",
+      "label": "Centre burner (from front)",
+      "value": "33 cm"
+    },
+    {
+      "alias": "burn_yb",
+      "label": "Back burner row (from front)",
+      "value": "50 cm"
+    },
+    {
+      "alias": "burn_r",
+      "label": "Burner radius",
+      "value": "5 cm"
+    },
+    {
+      "alias": "burn_h",
+      "label": "Burner base height",
+      "value": "1.6 cm"
+    },
+    {
+      "alias": "cap_r",
+      "label": "Burner cap radius",
+      "value": "3.8 cm"
+    },
+    {
+      "alias": "cap_h",
+      "label": "Burner cap height",
+      "value": "1.6 cm"
+    },
+    {
+      "alias": "big_r",
+      "label": "Pancake burner radius",
+      "value": "7 cm"
+    },
+    {
+      "alias": "big_cap_r",
+      "label": "Pancake burner cap radius",
+      "value": "5.5 cm"
+    },
+    {
+      "alias": "grate_m",
+      "label": "Grate margin from cooktop edge",
+      "value": "2 cm"
+    },
+    {
+      "alias": "grate_lift",
+      "label": "Grate foot height",
+      "value": "4 cm",
+      "note": "Clears the burners"
+    },
+    {
+      "alias": "bar_w",
+      "label": "Grate bar width",
+      "value": "2 cm"
+    },
+    {
+      "alias": "bar_h",
+      "label": "Grate bar height",
+      "value": "2 cm"
+    }
+  ],
+  "derived": [
+    {
+      "alias": "cook_y1",
+      "label": "Cooktop back edge",
+      "formula": "stove_d - panel_t"
+    },
+    {
+      "alias": "door_w",
+      "label": "Oven door width",
+      "formula": "stove_w - 2 * door_side"
+    },
+    {
+      "alias": "gx0",
+      "label": "Grate left edge",
+      "formula": "-stove_w / 2 + grate_m"
+    },
+    {
+      "alias": "gx1",
+      "label": "Grate right edge",
+      "formula": "stove_w / 2 - grate_m"
+    },
+    {
+      "alias": "gy1",
+      "label": "Grate back edge",
+      "formula": "cook_y1 - grate_m"
+    },
+    {
+      "alias": "g_len",
+      "label": "Grate width",
+      "formula": "gx1 - gx0"
+    },
+    {
+      "alias": "g_dep",
+      "label": "Grate depth",
+      "formula": "gy1 - grate_m"
+    },
+    {
+      "alias": "bar_z",
+      "label": "Grate bar bottom",
+      "formula": "cook_h + grate_lift"
+    }
+  ],
+  "parts": [
+    {
+      "name": "Stove",
+      "features": [
+        {
+          "name": "Body",
+          "type": "box",
+          "length": "stove_w",
+          "width": "stove_d",
+          "height": "cook_h",
+          "at": [
+            "-stove_w / 2",
+            "0",
+            "0"
+          ]
+        },
+        {
+          "name": "ToeKick",
+          "type": "box",
+          "length": "stove_w",
+          "width": "toe_d",
+          "height": "toe_h",
+          "at": [
+            "-stove_w / 2",
+            "0",
+            "0"
+          ],
+          "op": "cut"
+        },
+        {
+          "name": "Panel",
+          "type": "box",
+          "length": "stove_w",
+          "width": "panel_t",
+          "height": "panel_h",
+          "at": [
+            "-stove_w / 2",
+            "cook_y1",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "Display",
+          "type": "box",
+          "length": "disp_w",
+          "width": "disp_t",
+          "height": "disp_h",
+          "at": [
+            "-disp_w / 2",
+            "cook_y1 - disp_t",
+            "cook_h + (panel_h - disp_h) / 2"
+          ]
+        },
+        {
+          "name": "OvenDoor",
+          "type": "box",
+          "length": "door_w",
+          "width": "door_t",
+          "height": "door_top - door_bot",
+          "at": [
+            "-door_w / 2",
+            "-door_t",
+            "door_bot"
+          ]
+        },
+        {
+          "name": "OvenWindow",
+          "type": "box",
+          "length": "door_w - 2 * win_m",
+          "width": "win_dep",
+          "height": "win_z1 - win_z0",
+          "at": [
+            "-door_w / 2 + win_m",
+            "-door_t",
+            "win_z0"
+          ],
+          "op": "cut"
+        },
+        {
+          "name": "Handle",
+          "type": "box",
+          "length": "door_w - 2 * hdl_m + hdl_post",
+          "width": "hdl_off",
+          "height": "hdl_post",
+          "at": [
+            "-door_w / 2 + hdl_m - hdl_post / 2",
+            "-door_t - hdl_off",
+            "hdl_z - hdl_post / 2"
+          ]
+        },
+        {
+          "name": "Knob1",
+          "type": "cylinder",
+          "radius": "knob_r",
+          "height": "knob_l",
+          "at": [
+            "-2 * knob_dx",
+            "0",
+            "knob_z"
+          ],
+          "axis": "-y"
+        },
+        {
+          "name": "Knob2",
+          "type": "cylinder",
+          "radius": "knob_r",
+          "height": "knob_l",
+          "at": [
+            "-knob_dx",
+            "0",
+            "knob_z"
+          ],
+          "axis": "-y"
+        },
+        {
+          "name": "Knob3",
+          "type": "cylinder",
+          "radius": "knob_r",
+          "height": "knob_l",
+          "at": [
+            "0",
+            "0",
+            "knob_z"
+          ],
+          "axis": "-y"
+        },
+        {
+          "name": "Knob4",
+          "type": "cylinder",
+          "radius": "knob_r",
+          "height": "knob_l",
+          "at": [
+            "knob_dx",
+            "0",
+            "knob_z"
+          ],
+          "axis": "-y"
+        },
+        {
+          "name": "Knob5",
+          "type": "cylinder",
+          "radius": "knob_r",
+          "height": "knob_l",
+          "at": [
+            "2 * knob_dx",
+            "0",
+            "knob_z"
+          ],
+          "axis": "-y"
+        },
+        {
+          "name": "BurnerFL",
+          "type": "cylinder",
+          "radius": "burn_r",
+          "height": "burn_h",
+          "at": [
+            "-burner_x",
+            "burn_yf",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "CapFL",
+          "type": "cylinder",
+          "radius": "cap_r",
+          "height": "cap_h",
+          "at": [
+            "-burner_x",
+            "burn_yf",
+            "cook_h + burn_h"
+          ]
+        },
+        {
+          "name": "BurnerFR",
+          "type": "cylinder",
+          "radius": "burn_r",
+          "height": "burn_h",
+          "at": [
+            "burner_x",
+            "burn_yf",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "CapFR",
+          "type": "cylinder",
+          "radius": "cap_r",
+          "height": "cap_h",
+          "at": [
+            "burner_x",
+            "burn_yf",
+            "cook_h + burn_h"
+          ]
+        },
+        {
+          "name": "BurnerBL",
+          "type": "cylinder",
+          "radius": "burn_r",
+          "height": "burn_h",
+          "at": [
+            "-burner_x",
+            "burn_yb",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "CapBL",
+          "type": "cylinder",
+          "radius": "cap_r",
+          "height": "cap_h",
+          "at": [
+            "-burner_x",
+            "burn_yb",
+            "cook_h + burn_h"
+          ]
+        },
+        {
+          "name": "BurnerBR",
+          "type": "cylinder",
+          "radius": "burn_r",
+          "height": "burn_h",
+          "at": [
+            "burner_x",
+            "burn_yb",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "CapBR",
+          "type": "cylinder",
+          "radius": "cap_r",
+          "height": "cap_h",
+          "at": [
+            "burner_x",
+            "burn_yb",
+            "cook_h + burn_h"
+          ]
+        },
+        {
+          "name": "BurnerPancake",
+          "type": "cylinder",
+          "radius": "big_r",
+          "height": "burn_h",
+          "at": [
+            "0",
+            "burn_yc",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "CapPancake",
+          "type": "cylinder",
+          "radius": "big_cap_r",
+          "height": "cap_h",
+          "at": [
+            "0",
+            "burn_yc",
+            "cook_h + burn_h"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Grate",
+      "features": [
+        {
+          "name": "FrameFront",
+          "type": "box",
+          "length": "g_len",
+          "width": "bar_w",
+          "height": "bar_h",
+          "at": [
+            "gx0",
+            "grate_m",
+            "bar_z"
+          ]
+        },
+        {
+          "name": "FrameBack",
+          "type": "box",
+          "length": "g_len",
+          "width": "bar_w",
+          "height": "bar_h",
+          "at": [
+            "gx0",
+            "gy1 - bar_w",
+            "bar_z"
+          ]
+        },
+        {
+          "name": "FrameLeft",
+          "type": "box",
+          "length": "bar_w",
+          "width": "g_dep",
+          "height": "bar_h",
+          "at": [
+            "gx0",
+            "grate_m",
+            "bar_z"
+          ]
+        },
+        {
+          "name": "FrameRight",
+          "type": "box",
+          "length": "bar_w",
+          "width": "g_dep",
+          "height": "bar_h",
+          "at": [
+            "gx1 - bar_w",
+            "grate_m",
+            "bar_z"
+          ]
+        },
+        {
+          "name": "BarXFront",
+          "type": "box",
+          "length": "g_len",
+          "width": "bar_w",
+          "height": "bar_h",
+          "at": [
+            "gx0",
+            "burn_yf - bar_w / 2",
+            "bar_z"
+          ]
+        },
+        {
+          "name": "BarXMid",
+          "type": "box",
+          "length": "g_len",
+          "width": "bar_w",
+          "height": "bar_h",
+          "at": [
+            "gx0",
+            "burn_yc - bar_w / 2",
+            "bar_z"
+          ]
+        },
+        {
+          "name": "BarXBack",
+          "type": "box",
+          "length": "g_len",
+          "width": "bar_w",
+          "height": "bar_h",
+          "at": [
+            "gx0",
+            "burn_yb - bar_w / 2",
+            "bar_z"
+          ]
+        },
+        {
+          "name": "BarYLeft",
+          "type": "box",
+          "length": "bar_w",
+          "width": "g_dep",
+          "height": "bar_h",
+          "at": [
+            "-burner_x - bar_w / 2",
+            "grate_m",
+            "bar_z"
+          ]
+        },
+        {
+          "name": "BarYMid",
+          "type": "box",
+          "length": "bar_w",
+          "width": "g_dep",
+          "height": "bar_h",
+          "at": [
+            "-bar_w / 2",
+            "grate_m",
+            "bar_z"
+          ]
+        },
+        {
+          "name": "BarYRight",
+          "type": "box",
+          "length": "bar_w",
+          "width": "g_dep",
+          "height": "bar_h",
+          "at": [
+            "burner_x - bar_w / 2",
+            "grate_m",
+            "bar_z"
+          ]
+        },
+        {
+          "name": "FootFL",
+          "type": "box",
+          "length": "bar_w",
+          "width": "bar_w",
+          "height": "grate_lift",
+          "at": [
+            "gx0",
+            "grate_m",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "FootFR",
+          "type": "box",
+          "length": "bar_w",
+          "width": "bar_w",
+          "height": "grate_lift",
+          "at": [
+            "gx1 - bar_w",
+            "grate_m",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "FootBL",
+          "type": "box",
+          "length": "bar_w",
+          "width": "bar_w",
+          "height": "grate_lift",
+          "at": [
+            "gx0",
+            "gy1 - bar_w",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "FootBR",
+          "type": "box",
+          "length": "bar_w",
+          "width": "bar_w",
+          "height": "grate_lift",
+          "at": [
+            "gx1 - bar_w",
+            "gy1 - bar_w",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "FootML",
+          "type": "box",
+          "length": "bar_w",
+          "width": "bar_w",
+          "height": "grate_lift",
+          "at": [
+            "gx0",
+            "burn_yc - bar_w / 2",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "FootMR",
+          "type": "box",
+          "length": "bar_w",
+          "width": "bar_w",
+          "height": "grate_lift",
+          "at": [
+            "gx1 - bar_w",
+            "burn_yc - bar_w / 2",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "FootMF",
+          "type": "box",
+          "length": "bar_w",
+          "width": "bar_w",
+          "height": "grate_lift",
+          "at": [
+            "-bar_w / 2",
+            "grate_m",
+            "cook_h"
+          ]
+        },
+        {
+          "name": "FootMB",
+          "type": "box",
+          "length": "bar_w",
+          "width": "bar_w",
+          "height": "grate_lift",
+          "at": [
+            "-bar_w / 2",
+            "gy1 - bar_w",
+            "cook_h"
+          ]
+        }
+      ]
+    }
+  ],
+  "usage": [
+    {
+      "session": "fdb3d56a-ece9-4708-86f8-9b9afbdac079",
+      "started": "2026-11-10T13:45:10+00:00",
+      "ended": "2026-11-10T13:48:36+00:00",
+      "elapsed_s": 206,
+      "requests": 7,
+      "models": {
+        "claude-opus-5-5": 7
+      },
+      "tokens": {
+        "input": 14,
+        "output": 13717,
+        "cache_write": 35229,
+        "cache_read": 362586,
+        "total": 411546
+      },
+      "cost_usd": 0.6287,
+      "unpriced_models": []
+    }
+  ]
+}

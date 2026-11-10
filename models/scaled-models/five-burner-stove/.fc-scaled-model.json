@@ -1,6 +1,7 @@
 {
   "files": [
     "README.md",
+    "build_five_burner_stove.py",
     "five-burner-stove-grate.3mf",
     "five-burner-stove-plan.pdf",
     "five-burner-stove-stove.3mf",

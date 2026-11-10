@@ -38,15 +38,18 @@ the scale (`B2`) and holds the alias the bodies use.
 | Cooktop height | 92 cm | 46 | `cook_h` |
 | Display panel height | 20 cm | 10 | `panel_h` |
 | Display panel thickness | 6 cm | 3 | `panel_t` |
+| Panel top front edge radius | 4 cm | 2 | `panel_r` |
 | Display width | 30 cm | 15 | `disp_w` |
 | Display height | 8 cm | 4 | `disp_h` |
 | Display projection | 1.6 cm | 0.8 | `disp_t` |
 | Toe kick height | 10 cm | 5 | `toe_h` |
 | Toe kick depth | 5 cm | 2.5 | `toe_d` |
+| Body front edge radius | 2 cm | 1 | `body_r` |
 | Oven door bottom | 12 cm | 6 | `door_bot` |
 | Oven door top | 70 cm | 35 | `door_top` |
 | Oven door thickness | 2.5 cm | 1.25 | `door_t` |
 | Oven door side margin | 3 cm | 1.5 | `door_side` |
+| Oven door corner radius | 2 cm | 1 | `door_r` |
 | Oven window side margin | 9 cm | 4.5 | `win_m` |
 | Oven window bottom | 28 cm | 14 | `win_z0` |
 | Oven window top | 58 cm | 29 | `win_z1` |
@@ -102,6 +105,15 @@ Each piece has its own `.3mf`, already turned to its support-free print orientat
 
 ## Rebuilding
 
+`build_five_burner_stove.py` rebuilds this model from `model.json` without the skill. It needs only
+[uv](https://docs.astral.sh/uv/) and FreeCAD (`--help` lists the options):
+
+```sh
+uv run build_five_burner_stove.py
+```
+
+With the skill installed:
+
 ```sh
 python3 ~/.claude/skills/fc-scaled-model/scripts/fc_scaled_model.py build five-burner-stove
 ```
@@ -112,7 +124,8 @@ python3 ~/.claude/skills/fc-scaled-model/scripts/fc_scaled_model.py build five-b
 | Run started (UTC) | Model | Tokens | Time spent | Cost (USD) |
 |---|---|---:|---:|---:|
 | 2026-11-10 13:45 | claude-opus-5-5 | 411,546 | 3 min 26 s | $0.63 |
-| **Total** | | **411,546** | **3 min 26 s** | **$0.63** |
+| 2026-11-10 15:14 | claude-opus-5-5 | 1,738,983 | 3 min 23 s | $1.14 |
+| **Total** | | **2,150,529** | **6 min 49 s** | **$1.77** |
 
 Cost is estimated at Anthropic API list prices.
 <!-- /fc-scaled-model:usage -->

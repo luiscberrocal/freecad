@@ -38,6 +38,11 @@
       "value": "6 cm"
     },
     {
+      "alias": "panel_r",
+      "label": "Panel top front edge radius",
+      "value": "4 cm"
+    },
+    {
       "alias": "disp_w",
       "label": "Display width",
       "value": "30 cm"
@@ -63,6 +68,12 @@
       "value": "5 cm"
     },
     {
+      "alias": "body_r",
+      "label": "Body front edge radius",
+      "value": "2 cm",
+      "note": "Front corners and the cooktop's front and side top edges"
+    },
+    {
       "alias": "door_bot",
       "label": "Oven door bottom",
       "value": "12 cm"
@@ -82,6 +93,11 @@
       "alias": "door_side",
       "label": "Oven door side margin",
       "value": "3 cm"
+    },
+    {
+      "alias": "door_r",
+      "label": "Oven door corner radius",
+      "value": "2 cm"
     },
     {
       "alias": "win_m",
@@ -271,7 +287,17 @@
             "-stove_w / 2",
             "0",
             "0"
-          ]
+          ],
+          "fillet": {
+            "radius": "body_r",
+            "edges": [
+              "front-left",
+              "front-right",
+              "front-top",
+              "left-top",
+              "right-top"
+            ]
+          }
         },
         {
           "name": "ToeKick",
@@ -291,12 +317,18 @@
           "type": "box",
           "length": "stove_w",
           "width": "panel_t",
-          "height": "panel_h",
+          "height": "panel_h + body_r",
           "at": [
             "-stove_w / 2",
             "cook_y1",
-            "cook_h"
-          ]
+            "cook_h - body_r"
+          ],
+          "fillet": {
+            "radius": "panel_r",
+            "edges": [
+              "front-top"
+            ]
+          }
         },
         {
           "name": "Display",
@@ -320,7 +352,16 @@
             "-door_w / 2",
             "-door_t",
             "door_bot"
-          ]
+          ],
+          "fillet": {
+            "radius": "door_r",
+            "edges": [
+              "left-top",
+              "right-top",
+              "left-bottom",
+              "right-bottom"
+            ]
+          }
         },
         {
           "name": "OvenWindow",
@@ -787,6 +828,25 @@
         "total": 411546
       },
       "cost_usd": 0.6287,
+      "unpriced_models": []
+    },
+    {
+      "session": "35c5292b-4f09-4526-bc66-6ff6bcf31a6c",
+      "started": "2026-11-10T15:14:17+00:00",
+      "ended": "2026-11-10T15:17:39+00:00",
+      "elapsed_s": 203,
+      "requests": 24,
+      "models": {
+        "claude-opus-5-5": 24
+      },
+      "tokens": {
+        "input": 48,
+        "output": 16716,
+        "cache_write": 58870,
+        "cache_read": 1663349,
+        "total": 1738983
+      },
+      "cost_usd": 1.1381,
       "unpriced_models": []
     }
   ]

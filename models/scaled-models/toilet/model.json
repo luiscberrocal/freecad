@@ -1,0 +1,305 @@
+{
+  "title": "Toilet",
+  "slug": "toilet",
+  "scale": "1:20",
+  "bonding": "glue",
+  "description": "Standard floor-standing close-coupled toilet with elongated bowl, closed seat lid and cistern",
+  "tags": [
+    "toilet",
+    "bathroom",
+    "fixture"
+  ],
+  "parameters": [
+    {
+      "alias": "tot_d",
+      "label": "Overall depth",
+      "value": "70 cm",
+      "note": "Front of bowl to back of cistern"
+    },
+    {
+      "alias": "rim_h",
+      "label": "Rim height",
+      "value": "40 cm",
+      "note": "Floor to bowl rim"
+    },
+    {
+      "alias": "bowl_r",
+      "label": "Bowl front radius",
+      "value": "18 cm",
+      "note": "Bowl is 36 cm wide"
+    },
+    {
+      "alias": "ped_w",
+      "label": "Pedestal width",
+      "value": "22 cm"
+    },
+    {
+      "alias": "ped_d",
+      "label": "Pedestal depth",
+      "value": "45 cm"
+    },
+    {
+      "alias": "ped_y",
+      "label": "Pedestal front setback",
+      "value": "12 cm"
+    },
+    {
+      "alias": "ped_h",
+      "label": "Pedestal height",
+      "value": "25 cm"
+    },
+    {
+      "alias": "ped_r",
+      "label": "Pedestal corner radius",
+      "value": "5 cm"
+    },
+    {
+      "alias": "seat_t",
+      "label": "Seat and lid thickness",
+      "value": "5 cm"
+    },
+    {
+      "alias": "tank_w",
+      "label": "Cistern width",
+      "value": "45 cm"
+    },
+    {
+      "alias": "tank_d",
+      "label": "Cistern depth",
+      "value": "20 cm"
+    },
+    {
+      "alias": "tank_h",
+      "label": "Cistern height",
+      "value": "36 cm"
+    },
+    {
+      "alias": "tlid_t",
+      "label": "Cistern lid thickness",
+      "value": "3 cm"
+    },
+    {
+      "alias": "tlid_o",
+      "label": "Cistern lid overhang",
+      "value": "1 cm"
+    },
+    {
+      "alias": "tank_r",
+      "label": "Cistern corner radius",
+      "value": "3 cm"
+    },
+    {
+      "alias": "btn_r",
+      "label": "Flush button radius",
+      "value": "2.5 cm"
+    },
+    {
+      "alias": "btn_h",
+      "label": "Flush button height",
+      "value": "2 cm"
+    }
+  ],
+  "derived": [
+    {
+      "alias": "mid_x",
+      "label": "Centre line X",
+      "formula": "tank_w / 2 + tlid_o"
+    },
+    {
+      "alias": "bowl_h",
+      "label": "Bowl body height",
+      "formula": "rim_h - ped_h"
+    },
+    {
+      "alias": "seat_top",
+      "label": "Seat top height",
+      "formula": "rim_h + seat_t"
+    },
+    {
+      "alias": "seat_back",
+      "label": "Seat back edge",
+      "formula": "tot_d - tank_d"
+    },
+    {
+      "alias": "tank_top",
+      "label": "Cistern top height",
+      "formula": "rim_h + tank_h"
+    },
+    {
+      "alias": "top_h",
+      "label": "Overall height",
+      "formula": "tank_top + tlid_t"
+    }
+  ],
+  "parts": [
+    {
+      "name": "Bowl",
+      "features": [
+        {
+          "name": "Pedestal",
+          "type": "box",
+          "length": "ped_w",
+          "width": "ped_d",
+          "height": "ped_h",
+          "at": [
+            "mid_x - ped_w / 2",
+            "ped_y",
+            "0"
+          ],
+          "fillet": {
+            "radius": "ped_r",
+            "edges": "vertical"
+          }
+        },
+        {
+          "name": "BowlFront",
+          "type": "cylinder",
+          "radius": "bowl_r",
+          "height": "bowl_h",
+          "at": [
+            "mid_x",
+            "bowl_r",
+            "ped_h"
+          ]
+        },
+        {
+          "name": "BowlRear",
+          "type": "box",
+          "length": "2 * bowl_r",
+          "width": "tot_d - bowl_r",
+          "height": "bowl_h",
+          "at": [
+            "mid_x - bowl_r",
+            "bowl_r",
+            "ped_h"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Seat",
+      "features": [
+        {
+          "name": "SeatFront",
+          "type": "cylinder",
+          "radius": "bowl_r",
+          "height": "seat_t",
+          "at": [
+            "mid_x",
+            "bowl_r",
+            "rim_h"
+          ]
+        },
+        {
+          "name": "SeatRear",
+          "type": "box",
+          "length": "2 * bowl_r",
+          "width": "seat_back - bowl_r",
+          "height": "seat_t",
+          "at": [
+            "mid_x - bowl_r",
+            "bowl_r",
+            "rim_h"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cistern",
+      "features": [
+        {
+          "name": "Tank",
+          "type": "box",
+          "length": "tank_w",
+          "width": "tank_d",
+          "height": "tank_h",
+          "at": [
+            "mid_x - tank_w / 2",
+            "seat_back",
+            "rim_h"
+          ],
+          "fillet": {
+            "radius": "tank_r",
+            "edges": "vertical"
+          }
+        },
+        {
+          "name": "TankLid",
+          "type": "box",
+          "length": "tank_w + 2 * tlid_o",
+          "width": "tank_d + 2 * tlid_o",
+          "height": "tlid_t",
+          "at": [
+            "mid_x - tank_w / 2 - tlid_o",
+            "seat_back - tlid_o",
+            "tank_top"
+          ],
+          "fillet": {
+            "radius": "tank_r",
+            "edges": "vertical"
+          }
+        },
+        {
+          "name": "FlushButton",
+          "type": "cylinder",
+          "radius": "btn_r",
+          "height": "btn_h",
+          "at": [
+            "mid_x",
+            "seat_back + tank_d / 2",
+            "top_h"
+          ]
+        }
+      ]
+    }
+  ],
+  "plan": {
+    "dimensions": [
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "0",
+        "to": "rim_h"
+      },
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "0",
+        "to": "seat_top"
+      },
+      {
+        "view": "right",
+        "axis": "y",
+        "from": "0",
+        "to": "seat_back"
+      },
+      {
+        "view": "top",
+        "axis": "x",
+        "from": "mid_x - bowl_r",
+        "to": "mid_x + bowl_r"
+      }
+    ]
+  },
+  "usage": [
+    {
+      "session": "764f05a3-b4c8-4b38-b6fd-7efcf739fb78",
+      "started": "2026-11-10T17:37:50+00:00",
+      "ended": "2026-11-10T17:39:57+00:00",
+      "elapsed_s": 127,
+      "requests": 10,
+      "models": {
+        "claude-opus-5-5": 10
+      },
+      "tokens": {
+        "input": 22,
+        "output": 8917,
+        "cache_write": 56226,
+        "cache_read": 710929,
+        "total": 776094
+      },
+      "cost_usd": 0.7704,
+      "unpriced_models": []
+    }
+  ]
+}

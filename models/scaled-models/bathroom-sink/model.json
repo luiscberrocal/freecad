@@ -1,0 +1,280 @@
+{
+  "title": "Bathroom sink",
+  "slug": "bathroom-sink",
+  "scale": "1:20",
+  "bonding": "glue",
+  "description": "Pedestal bathroom sink with a rectangular basin, round bowl and single-hole faucet",
+  "tags": [
+    "sink",
+    "bathroom",
+    "fixture"
+  ],
+  "parameters": [
+    {
+      "alias": "basin_w",
+      "label": "Basin width",
+      "value": "56 cm"
+    },
+    {
+      "alias": "basin_d",
+      "label": "Basin depth (wall to front)",
+      "value": "52 cm"
+    },
+    {
+      "alias": "basin_t",
+      "label": "Basin thickness",
+      "value": "17 cm"
+    },
+    {
+      "alias": "rim_h",
+      "label": "Rim height",
+      "value": "85 cm",
+      "note": "Floor to top of basin"
+    },
+    {
+      "alias": "corner_r",
+      "label": "Front corner radius",
+      "value": "8 cm"
+    },
+    {
+      "alias": "bowl_w",
+      "label": "Bowl width at rim",
+      "value": "40 cm"
+    },
+    {
+      "alias": "bowl_depth",
+      "label": "Bowl depth",
+      "value": "13 cm"
+    },
+    {
+      "alias": "bowl_y",
+      "label": "Bowl centre from wall",
+      "value": "28 cm"
+    },
+    {
+      "alias": "drain_r",
+      "label": "Drain radius",
+      "value": "2 cm"
+    },
+    {
+      "alias": "drain_depth",
+      "label": "Drain recess depth",
+      "value": "1 cm"
+    },
+    {
+      "alias": "ped_r_bottom",
+      "label": "Pedestal radius at floor",
+      "value": "11 cm"
+    },
+    {
+      "alias": "ped_r_top",
+      "label": "Pedestal radius at top",
+      "value": "7 cm"
+    },
+    {
+      "alias": "ped_y",
+      "label": "Pedestal centre from wall",
+      "value": "14 cm"
+    },
+    {
+      "alias": "tap_y",
+      "label": "Faucet centre from wall",
+      "value": "5 cm"
+    },
+    {
+      "alias": "tap_base_r",
+      "label": "Faucet base radius",
+      "value": "2.5 cm"
+    },
+    {
+      "alias": "tap_base_h",
+      "label": "Faucet base height",
+      "value": "3 cm"
+    },
+    {
+      "alias": "tap_r",
+      "label": "Faucet column radius",
+      "value": "1.5 cm"
+    },
+    {
+      "alias": "tap_h",
+      "label": "Faucet height above basin",
+      "value": "15 cm"
+    },
+    {
+      "alias": "spout_l",
+      "label": "Spout reach",
+      "value": "12 cm"
+    },
+    {
+      "alias": "spout_w",
+      "label": "Spout width",
+      "value": "3 cm"
+    },
+    {
+      "alias": "spout_t",
+      "label": "Spout thickness",
+      "value": "2 cm"
+    }
+  ],
+  "derived": [
+    {
+      "alias": "ped_h",
+      "label": "Pedestal height",
+      "formula": "rim_h - basin_t"
+    },
+    {
+      "alias": "bowl_sr",
+      "label": "Bowl sphere radius",
+      "formula": "((bowl_w / 2) * (bowl_w / 2) + bowl_depth * bowl_depth) / (2 * bowl_depth)"
+    }
+  ],
+  "parts": [
+    {
+      "name": "Pedestal",
+      "features": [
+        {
+          "name": "Column",
+          "type": "cone",
+          "radius1": "ped_r_bottom",
+          "radius2": "ped_r_top",
+          "height": "ped_h",
+          "at": [
+            "0",
+            "-ped_y",
+            "0"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Basin",
+      "features": [
+        {
+          "name": "Slab",
+          "type": "box",
+          "length": "basin_w",
+          "width": "basin_d",
+          "height": "basin_t",
+          "at": [
+            "-basin_w / 2",
+            "-basin_d",
+            "ped_h"
+          ],
+          "fillet": {
+            "radius": "corner_r",
+            "edges": [
+              "front-left",
+              "front-right"
+            ]
+          }
+        },
+        {
+          "name": "Bowl",
+          "type": "sphere",
+          "op": "cut",
+          "radius": "bowl_sr",
+          "at": [
+            "0",
+            "-bowl_y",
+            "rim_h - bowl_depth + bowl_sr"
+          ]
+        },
+        {
+          "name": "Drain",
+          "type": "cylinder",
+          "op": "cut",
+          "radius": "drain_r",
+          "height": "drain_depth",
+          "at": [
+            "0",
+            "-bowl_y",
+            "rim_h - bowl_depth - drain_depth"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Faucet",
+      "features": [
+        {
+          "name": "Base",
+          "type": "cylinder",
+          "radius": "tap_base_r",
+          "height": "tap_base_h",
+          "at": [
+            "0",
+            "-tap_y",
+            "rim_h"
+          ]
+        },
+        {
+          "name": "Column",
+          "type": "cylinder",
+          "radius": "tap_r",
+          "height": "tap_h - tap_base_h",
+          "at": [
+            "0",
+            "-tap_y",
+            "rim_h + tap_base_h"
+          ]
+        },
+        {
+          "name": "Spout",
+          "type": "box",
+          "length": "spout_w",
+          "width": "spout_l",
+          "height": "spout_t",
+          "at": [
+            "-spout_w / 2",
+            "-tap_y - spout_l",
+            "rim_h + tap_h - spout_t"
+          ]
+        }
+      ]
+    }
+  ],
+  "plan": {
+    "dimensions": [
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "0",
+        "to": "ped_h"
+      },
+      {
+        "view": "right",
+        "axis": "z",
+        "from": "rim_h - bowl_depth",
+        "to": "rim_h"
+      },
+      {
+        "view": "top",
+        "axis": "x",
+        "from": "-bowl_w / 2",
+        "to": "bowl_w / 2"
+      }
+    ]
+  },
+  "usage": [
+    {
+      "session": "6b7f6a0b-1f5a-4268-86fa-6232ea8d0138",
+      "started": "2026-11-13T17:37:07+00:00",
+      "ended": "2026-11-13T17:38:18+00:00",
+      "elapsed_s": 71,
+      "requests": 6,
+      "models": {
+        "claude-opus-5-5": 6
+      },
+      "tokens": {
+        "input": 12,
+        "output": 6568,
+        "cache_write": 31497,
+        "cache_read": 289380,
+        "total": 327457
+      },
+      "cost_usd": 0.4413,
+      "unpriced_models": []
+    }
+  ]
+}

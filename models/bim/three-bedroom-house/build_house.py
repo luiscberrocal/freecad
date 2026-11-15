@@ -10,7 +10,7 @@ Writes next to this file:
     three-bedroom-house.ifc            IFC export
     three-bedroom-house-plan.pdf       floor plan and four elevations, A3 at 1:50
     three-bedroom-house-schedule.csv   room, wall and opening quantities
-    three-bedroom-house-cardboard-1-50.pdf  A4 cutting sheets for a cardboard model
+    three-bedroom-house-cardboard-1-50.pdf  US Legal cutting sheets for a cardboard model
 
 All lengths are millimetres. X runs east, Y runs north, Z = 0 is the finished
 floor. Edit the constants below and re-run to change the design.
@@ -800,7 +800,10 @@ def write_drawings(model, path):
 # --- Cardboard model cutting sheets ------------------------------------------
 CARD_SCALE = 50  # cardboard model at 1:CARD_SCALE
 CARD_T = 2.0  # board thickness on paper, mm; panel lengths are cut to suit it
-CARD_W, CARD_H, CARD_MARGIN, CARD_GAP = 297, 210, 10, 5  # A4 landscape, mm
+PAPER = {"A4": (297, 210), "Letter": (279.4, 215.9), "Legal": (355.6, 215.9)}  # landscape, mm
+CARD_PAPER = "Legal"
+CARD_W, CARD_H = PAPER[CARD_PAPER]
+CARD_MARGIN, CARD_GAP = 10, 5  # mm
 CARD_HEADER = 14  # band at the top of each sheet for the title and check bar
 EXTERIOR_WALLS = {"Wall South", "Wall North", "Wall West", "Wall East"}
 
@@ -886,7 +889,7 @@ def roof_pieces(model):
 
 
 def card_sheet(sheet, count, subtitle):
-    """A4 landscape figure whose axes are paper millimetres."""
+    """Landscape CARD_PAPER figure whose axes are paper millimetres."""
     figure = plt.figure(figsize=(CARD_W / 25.4, CARD_H / 25.4))
     ax = figure.add_axes([0, 0, 1, 1])
     ax.set_xlim(0, CARD_W)
@@ -1040,7 +1043,7 @@ def cover_sheet(ax, panels, roof):
 
 
 def write_cutting_sheets(model, path):
-    """A4 cutting templates for a cardboard model: cover, base, walls and roof."""
+    """CARD_PAPER cutting templates for a cardboard model: cover, base, walls and roof."""
     panels = wall_panels()
     roof = roof_pieces(model)
     pieces = [((p["span"][1] - p["span"][0]) / CARD_SCALE, WALL_H / CARD_SCALE,

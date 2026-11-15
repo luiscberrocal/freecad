@@ -13,3 +13,16 @@ clean *ARGS:
 # List the *.FCBak files that clean-bak would delete.
 clean-dry:
     @just clean --dry-run
+
+# Google Drive folder that receives the PDFs (rclone remote "gdrive").
+drive_folder := "1WMZzek2Hf-heIRtXxG153-wXcQ9t08do"
+
+# Upload new and changed PDFs to Google Drive, keeping the repo's folder layout. Never deletes anything there.
+upload-pdfs *ARGS:
+    rclone copy {{justfile_directory()}} "gdrive,root_folder_id={{drive_folder}}:" \
+        --filter "- .*/**" --filter "+ *.pdf" --filter "- *" \
+        --progress {{ARGS}}
+
+# List the PDFs that upload-pdfs would upload.
+upload-pdfs-dry:
+    @just upload-pdfs --dry-run

@@ -10,6 +10,7 @@ Writes next to this file:
     three-bedroom-house.ifc            IFC export
     three-bedroom-house-plan.pdf       floor plan and four elevations, A3 at 1:50
     three-bedroom-house-schedule.csv   room, wall and opening quantities
+    three-bedroom-house-cardboard-1-50.pdf  A4 cutting sheets for a cardboard model
 
 All lengths are millimetres. X runs east, Y runs north, Z = 0 is the finished
 floor. Edit the constants below and re-run to change the design.
@@ -796,6 +797,277 @@ def write_drawings(model, path):
             plt.close(figure)
 
 
+# --- Cardboard model cutting sheets ------------------------------------------
+CARD_SCALE = 50  # cardboard model at 1:CARD_SCALE
+CARD_T = 2.0  # board thickness on paper, mm; panel lengths are cut to suit it
+CARD_W, CARD_H, CARD_MARGIN, CARD_GAP = 297, 210, 10, 5  # A4 landscape, mm
+CARD_HEADER = 14  # band at the top of each sheet for the title and check bar
+EXTERIOR_WALLS = {"Wall South", "Wall North", "Wall West", "Wall East"}
+
+
+def board_centre(wall_name):
+    """Board centreline across the wall: exterior boards sit flush with the outer face."""
+    start, _, thickness = WALLS[wall_name]
+    across = start[1] if is_along_x(wall_name) else start[0]
+    if wall_name not in EXTERIOR_WALLS:
+        return across
+    t = CARD_T * CARD_SCALE
+    size = DEPTH if is_along_x(wall_name) else LENGTH
+    return t / 2 if across < size / 2 else size - t / 2
+
+
+def panel_span(wall_name):
+    """Start and end of a board along its wall axis.
+
+    An end that stops at the face of a crossing wall is moved to the same face
+    of that wall's board, so walls still meet when the board is thinner or
+    thicker than the scaled wall.
+    """
+    start, end, thickness = WALLS[wall_name]
+    along = 0 if is_along_x(wall_name) else 1
+    t = CARD_T * CARD_SCALE
+    span = []
+    for value in (start[along], end[along]):
+        for other, (o_start, o_end, o_thickness) in WALLS.items():
+            if other == wall_name or is_along_x(other) == is_along_x(wall_name):
+                continue
+            lo, hi = sorted((o_start[1 - along], o_end[1 - along]))
+            if not lo - thickness / 2 - 1 <= start[1 - along] <= hi + thickness / 2 + 1:
+                continue
+            for side in (-1, 1):
+                if abs(value - (o_start[along] + side * o_thickness / 2)) < 1:
+                    value = board_centre(other) + side * t / 2
+                    break
+            else:
+                continue
+            break
+        span.append(value)
+    return tuple(sorted(span))
+
+
+def wall_panels():
+    """Code, wall name, span and openings (offset, width, bottom, top) of each board."""
+    openings = {name: [] for name in WALLS}
+    for name, (_, host, centre, width, height, sill) in WINDOWS.items():
+        openings[host].append(("window", centre, width, sill, sill + height))
+    for name, (host, centre, width, height, _, _) in DOORS.items():
+        openings[host].append(("door", centre, width, 0, height))
+    panels, counts = [], {"E": 0, "I": 0}
+    for name in WALLS:
+        prefix = "E" if name in EXTERIOR_WALLS else "I"
+        counts[prefix] += 1
+        lo, hi = panel_span(name)
+        cuts = [(kind, centre - width / 2 - lo, width, bottom, top)
+                for kind, centre, width, bottom, top in openings[name]]  # fmt: skip
+        panels.append({"code": f"{prefix}{counts[prefix]}", "name": name,
+                       "span": (lo, hi), "cuts": cuts})  # fmt: skip
+    return panels
+
+
+def roof_pieces(model):
+    """True shape of each roof plane, flattened from the underside of the roof solid."""
+    pieces = []
+    for face in model["roof"].Shape.Faces:
+        n = face.normalAt(0.5, 0.5)
+        if n.z > -0.1:  # keep the downward-facing sloped faces
+            continue
+        facing = Vector(-n.x, -n.y, 0).normalize()  # the slope faces this way
+        u = Vector(-facing.y, facing.x, 0)  # along the eave
+        v = Vector(0, 0, 1) - n * n.z  # up the slope
+        v.normalize()
+        points = [(p.Point.dot(u), p.Point.dot(v)) for p in face.OuterWire.OrderedVertexes]
+        x0 = min(x for x, _ in points)
+        y0 = min(y for _, y in points)
+        compass = {(0, -1): "South", (0, 1): "North", (1, 0): "East", (-1, 0): "West"}
+        side = compass[(round(facing.x), round(facing.y))]
+        pieces.append((side, [((x - x0) / CARD_SCALE, (y - y0) / CARD_SCALE) for x, y in points]))
+    order = ["South", "North", "East", "West"]
+    return sorted(pieces, key=lambda piece: order.index(piece[0]))
+
+
+def card_sheet(sheet, count, subtitle):
+    """A4 landscape figure whose axes are paper millimetres."""
+    figure = plt.figure(figsize=(CARD_W / 25.4, CARD_H / 25.4))
+    ax = figure.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, CARD_W)
+    ax.set_ylim(0, CARD_H)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    top = CARD_H - CARD_MARGIN
+    ax.text(CARD_MARGIN, top - 4, f"Three bedroom house, cardboard model 1:{CARD_SCALE}",
+            fontsize=10, fontweight="bold", color="#111")  # fmt: skip
+    ax.text(CARD_MARGIN, top - 9, f"{subtitle}   |   board {CARD_T:g} mm   |   sheet {sheet} of {count}",
+            fontsize=7.5, color="#333")  # fmt: skip
+    # 100 mm check bar: print at 100 % ("actual size") and measure it
+    x0, y0 = CARD_W - CARD_MARGIN - 100, top - 8
+    for i in range(10):
+        ax.add_patch(Rectangle((x0 + 10 * i, y0), 10, 2, fc="#111" if i % 2 else "white",
+                               ec="#111", lw=0.4))  # fmt: skip
+    ax.text(x0 + 50, y0 + 3, "check: this bar must measure 100 mm", fontsize=6, ha="center")
+    return figure, ax
+
+
+def draw_panel(ax, panel, x, y):
+    lo, hi = panel["span"]
+    w, h = (hi - lo) / CARD_SCALE, WALL_H / CARD_SCALE
+    ax.add_patch(Rectangle((x, y), w, h, fc="#f3ece0", ec="#000", lw=0.6))
+    for kind, offset, width, bottom, top in panel["cuts"]:
+        rect = (x + offset / CARD_SCALE, y + bottom / CARD_SCALE)
+        cw, ch = width / CARD_SCALE, (top - bottom) / CARD_SCALE
+        ax.add_patch(Rectangle(rect, cw, ch, fc="#cfe3ee" if kind == "window" else "#e6d3bd",
+                               ec="#000", lw=0.6, hatch="////"))  # fmt: skip
+    ends = ("W", "E") if is_along_x(panel["name"]) else ("S", "N")
+    band = y + h - 3.2  # text stays in the band above every opening
+    label = panel["code"]
+    if w > 45:
+        label += f"  {panel['name'].removeprefix('Wall ')}  {w:.1f} mm"
+    ax.text(x + w / 2, band, label, fontsize=6, ha="center", va="center", fontweight="bold")
+    if w > 18:
+        ax.text(x + 1.2, band, ends[0], fontsize=6, ha="left", va="center", color="#a00")
+        ax.text(x + w - 1.2, band, ends[1], fontsize=6, ha="right", va="center", color="#a00")
+
+
+def draw_roof_piece(ax, piece, x, y):
+    side, points = piece
+    ax.add_patch(Polygon([(x + px, y + py) for px, py in points], closed=True,
+                         fc="#ead2cc", ec="#000", lw=0.6))  # fmt: skip
+    width = max(px for px, _ in points)
+    ax.text(x + width / 2, y + 12, f"Roof {side.lower()} slope", fontsize=7,
+            ha="center", fontweight="bold")  # fmt: skip
+    ax.text(x + width / 2, y + 2.5, "eave edge", fontsize=5.5, ha="center", color="#a00")
+
+
+def draw_base(ax, panels, x, y):
+    s = CARD_SCALE
+    t = CARD_T * s
+    ax.add_patch(Rectangle((x, y), LENGTH / s, DEPTH / s, fc="white", ec="#000", lw=0.7))
+    for name, (x0, y0, x1, y1, _) in ROOMS.items():
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        ax.text(x + cx / s, y + cy / s, name, fontsize=5.5, ha="center", va="center",
+                color="#999", style="italic")  # fmt: skip
+    for panel in panels:
+        lo, hi = panel["span"]
+        c = board_centre(panel["name"])
+        if is_along_x(panel["name"]):
+            box = (lo, c - t / 2, hi - lo, t)
+        else:
+            box = (c - t / 2, lo, t, hi - lo)
+        ax.add_patch(Rectangle((x + box[0] / s, y + box[1] / s), box[2] / s, box[3] / s,
+                               fc="#777", ec="none"))  # fmt: skip
+        for kind, offset, width, bottom, _ in panel["cuts"]:
+            if bottom:  # only doors reach the floor
+                continue
+            a = lo + offset
+            gap = (a, c - t / 2, width, t) if is_along_x(panel["name"]) else (c - t / 2, a, t, width)
+            ax.add_patch(Rectangle((x + gap[0] / s, y + gap[1] / s), gap[2] / s, gap[3] / s,
+                                   fc="white", ec="#777", lw=0.3, ls="--"))  # fmt: skip
+        mid = (lo + hi) / 2
+        px, py = (mid, c) if is_along_x(panel["name"]) else (c, mid)
+        ax.text(x + px / s, y + py / s, panel["code"], fontsize=5.5, ha="center", va="center",
+                fontweight="bold", color="#a00",
+                bbox={"fc": "white", "ec": "#a00", "lw": 0.3, "pad": 0.8, "boxstyle": "round"})
+    for text, (px, py) in {"S": (LENGTH / 2, -230), "N": (LENGTH / 2, DEPTH + 230),
+                           "W": (-230, DEPTH / 2), "E": (LENGTH + 230, DEPTH / 2)}.items():  # fmt: skip
+        ax.text(x + px / s, y + py / s, text, fontsize=8, ha="center", va="center",
+                fontweight="bold", color="#a00")  # fmt: skip
+
+
+def pack(pieces):
+    """First-fit shelf packing of (width, height, draw) pieces; returns placed pieces per page."""
+    left, right = CARD_MARGIN, CARD_W - CARD_MARGIN
+    top, bottom = CARD_H - CARD_MARGIN - CARD_HEADER, CARD_MARGIN
+    pages = []  # each page: {"shelves": [[y, height, next_x]], "free_y": y, "items": [...]}
+    for w, h, draw in sorted(pieces, key=lambda p: (-p[1], -p[0])):
+        spot = None
+        for page in pages:
+            for shelf in page["shelves"]:
+                if h <= shelf[1] and shelf[2] + w <= right:
+                    spot = page, shelf
+                    break
+            if not spot and page["free_y"] - h >= bottom:
+                page["shelves"].append([page["free_y"] - h, h, left])
+                page["free_y"] -= h + CARD_GAP
+                spot = page, page["shelves"][-1]
+            if spot:
+                break
+        if not spot:
+            pages.append({"shelves": [[top - h, h, left]], "free_y": top - h - CARD_GAP, "items": []})
+            spot = pages[-1], pages[-1]["shelves"][0]
+        page, shelf = spot
+        page["items"].append((shelf[2], shelf[0] + shelf[1] - h, draw))
+        shelf[2] += w + CARD_GAP
+    return [page["items"] for page in pages]
+
+
+def cover_sheet(ax, panels, roof):
+    steps = [
+        "1. Print every sheet at 100 % (\"actual size\", no fit to page) and",
+        "    check the 100 mm bar at the top right before cutting.",
+        f"2. Glue the sheets on {CARD_T:g} mm board and cut along the black lines.",
+        "    Hatched areas are door and window openings: cut them out.",
+        "3. Base: cut the floor plate. Grey strips show where each wall",
+        "    board stands, dashed gaps are door openings.",
+        "4. Walls: E1 South and E2 North run the full length; E3 West and",
+        "    E4 East fit between them. Then glue the interior boards I1-I12.",
+        "    Red end letters (W/E, S/N) match the compass letters on the base.",
+        "5. Roof: tape the four slopes together on their undersides along",
+        "    the hips. It rests on the top outer edges of the exterior walls;",
+        "    leave it loose to look inside.",
+        "6. Optional: glue clear acetate behind the window openings.",
+        "",
+        f"Board lengths are computed for {CARD_T:g} mm board. For another",
+        "thickness change CARD_T in build_house.py and run it again.",
+    ]
+    y = CARD_H - CARD_MARGIN - CARD_HEADER - 4
+    ax.text(CARD_MARGIN, y, "Assembly", fontsize=9, fontweight="bold")
+    for i, step in enumerate(steps):
+        ax.text(CARD_MARGIN, y - 6 - 4.3 * i, step, fontsize=7, va="top")
+    rows = [("Base", "Floor plate", f"{LENGTH / CARD_SCALE:.1f} x {DEPTH / CARD_SCALE:.1f}")]
+    for panel in panels:
+        lo, hi = panel["span"]
+        rows.append((panel["code"], panel["name"].removeprefix("Wall "),
+                     f"{(hi - lo) / CARD_SCALE:.1f} x {WALL_H / CARD_SCALE:.1f}"))  # fmt: skip
+    for side, points in roof:
+        w, h = max(px for px, _ in points), max(py for _, py in points)
+        kind = "trapezoid" if len(points) == 4 else "triangle"
+        rows.append(("Roof", f"{side} slope ({kind})", f"{w:.1f} x {h:.1f}"))
+    x = 165
+    ax.text(x, y, "Parts (mm on paper)", fontsize=9, fontweight="bold")
+    for i, row in enumerate([("Part", "Name", "Size")] + rows):
+        weight = "bold" if i == 0 else "normal"
+        for dx, text in zip((0, 14, 70), row):
+            ax.text(x + dx, y - 6 - 4.3 * i, text, fontsize=7, va="top", fontweight=weight)
+
+
+def write_cutting_sheets(model, path):
+    """A4 cutting templates for a cardboard model: cover, base, walls and roof."""
+    panels = wall_panels()
+    roof = roof_pieces(model)
+    pieces = [((p["span"][1] - p["span"][0]) / CARD_SCALE, WALL_H / CARD_SCALE,
+               lambda ax, x, y, p=p: draw_panel(ax, p, x, y)) for p in panels]  # fmt: skip
+    for piece in roof:
+        w = max(px for px, _ in piece[1])
+        h = max(py for _, py in piece[1])
+        pieces.append((w, h, lambda ax, x, y, piece=piece: draw_roof_piece(ax, piece, x, y)))
+    pages = pack(pieces)
+    count = len(pages) + 2
+    with PdfPages(path) as pdf:
+        figure, ax = card_sheet(1, count, "assembly and parts list")
+        cover_sheet(ax, panels, roof)
+        pdf.savefig(figure)
+        plt.close(figure)
+        figure, ax = card_sheet(2, count, "base plate")
+        draw_base(ax, panels, (CARD_W - LENGTH / CARD_SCALE) / 2, CARD_MARGIN + 3)
+        pdf.savefig(figure)
+        plt.close(figure)
+        for i, page in enumerate(pages):
+            figure, ax = card_sheet(i + 3, count, "walls and roof")
+            for x, y, draw in page:
+                draw(ax, x, y)
+            pdf.savefig(figure)
+            plt.close(figure)
+
+
 def write_ifc(model, path):
     """Export IFC, then repair three gaps in FreeCAD's exporter.
 
@@ -831,6 +1103,7 @@ def main():
     write_ifc(model, HERE / f"{SLUG}.ifc")
     write_schedule(model, HERE / f"{SLUG}-schedule.csv")
     write_drawings(model, HERE / f"{SLUG}-plan.pdf")
+    write_cutting_sheets(model, HERE / f"{SLUG}-cardboard-1-{CARD_SCALE}.pdf")
     print("DONE")
     return doc, model
 

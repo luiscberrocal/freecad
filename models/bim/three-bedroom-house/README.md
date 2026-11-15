@@ -41,10 +41,11 @@ This overwrites the generated files, so changes made by hand in the `.FCStd` are
 - `three-bedroom-house-plan.pdf`: three A3 sheets at 1:50: the floor plan with the door
   and window table, the south and north elevations, and the east and west elevations
 - `three-bedroom-house-schedule.csv`: room, wall, door and window quantities
-- `three-bedroom-house-cardboard-1-50.pdf`: seven A4 cutting sheets for a 1:50 cardboard
-  model: assembly notes and parts list, the base plate with wall positions, every wall
-  board with its door and window cut-outs, and the four roof slopes. Print at 100 %.
-  Board lengths suit 2 mm board; set `CARD_T` (and `CARD_SCALE`) in the script for another.
+- `three-bedroom-house-cardboard-1-50.pdf`: six US Legal (8.5 x 14 in) cutting sheets for a
+  1:50 cardboard model: assembly notes and parts list, the base plate with wall positions,
+  every wall board with its door and window cut-outs, and the four roof slopes. Print at
+  100 %. Board lengths suit 2 mm board; set `CARD_T`, `CARD_SCALE` or `CARD_PAPER` (A4,
+  Letter or Legal) in the script for another.
 
 ## Not modelled
 

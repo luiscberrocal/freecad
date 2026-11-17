@@ -94,6 +94,12 @@
       "note": "Counter top to basin floor"
     },
     {
+      "alias": "basin_r",
+      "label": "Basin corner radius",
+      "value": "4 cm",
+      "note": "Vertical corners and floor edges"
+    },
+    {
       "alias": "divider_w",
       "label": "Divider between basins",
       "value": "5 cm"
@@ -229,7 +235,20 @@
             "-basin_xc - basin_w / 2",
             "basin_y0",
             "basin_floor"
-          ]
+          ],
+          "fillet": {
+            "radius": "basin_r",
+            "edges": [
+              "front-left",
+              "front-right",
+              "back-left",
+              "back-right",
+              "front-bottom",
+              "back-bottom",
+              "left-bottom",
+              "right-bottom"
+            ]
+          }
         },
         {
           "name": "BasinRightLow",
@@ -242,7 +261,20 @@
             "basin_xc - basin_w / 2",
             "basin_y0",
             "basin_floor"
-          ]
+          ],
+          "fillet": {
+            "radius": "basin_r",
+            "edges": [
+              "front-left",
+              "front-right",
+              "back-left",
+              "back-right",
+              "front-bottom",
+              "back-bottom",
+              "left-bottom",
+              "right-bottom"
+            ]
+          }
         },
         {
           "name": "DrainLeft",
@@ -375,7 +407,16 @@
             "-basin_xc - basin_w / 2",
             "basin_y0",
             "cab_h"
-          ]
+          ],
+          "fillet": {
+            "radius": "basin_r",
+            "edges": [
+              "front-left",
+              "front-right",
+              "back-left",
+              "back-right"
+            ]
+          }
         },
         {
           "name": "BasinRight",
@@ -388,7 +429,16 @@
             "basin_xc - basin_w / 2",
             "basin_y0",
             "cab_h"
-          ]
+          ],
+          "fillet": {
+            "radius": "basin_r",
+            "edges": [
+              "front-left",
+              "front-right",
+              "back-left",
+              "back-right"
+            ]
+          }
         }
       ]
     },
@@ -514,21 +564,21 @@
     {
       "session": "493b8119-615e-47d8-a366-74f524e2b9e0",
       "started": "2026-11-17T12:40:45+00:00",
-      "ended": "2026-11-17T15:07:30+00:00",
-      "elapsed_s": 8805,
-      "requests": 28,
+      "ended": "2026-11-17T15:13:49+00:00",
+      "elapsed_s": 9183,
+      "requests": 34,
       "models": {
-        "claude-opus-5-5": 25,
+        "claude-opus-5-5": 31,
         "claude-haiku-5-5": 3
       },
       "tokens": {
-        "input": 62,
-        "output": 30152,
-        "cache_write": 207459,
-        "cache_read": 2374853,
-        "total": 2612526
+        "input": 78,
+        "output": 33872,
+        "cache_write": 212181,
+        "cache_read": 3088589,
+        "total": 3334720
       },
-      "cost_usd": 2.1114,
+      "cost_usd": 2.3664,
       "unpriced_models": []
     }
   ]

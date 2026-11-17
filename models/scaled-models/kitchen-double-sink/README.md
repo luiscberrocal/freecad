@@ -49,6 +49,7 @@ the scale (`B2`) and holds the alias the bodies use.
 | Basin width | 38 cm | 19 | `basin_w` |
 | Basin length (front to back) | 40 cm | 20 | `basin_l` |
 | Basin depth | 20 cm | 10 | `basin_depth` |
+| Basin corner radius | 4 cm | 2 | `basin_r` |
 | Divider between basins | 5 cm | 2.5 | `divider_w` |
 | Basin front edge from counter front | 8 cm | 4 | `basin_front` |
 | Drain radius | 4.5 cm | 2.25 | `drain_r` |
@@ -84,7 +85,7 @@ Parts split so they print without supports:
 | Between | Bond | Detail |
 |---|---|---|
 | Cabinet1 / Cabinet2 | glue | glue (300 mm² contact) |
-| Cabinet2 / Counter | glue | glue (738.5 mm² contact) |
+| Cabinet2 / Counter | glue | glue (745.37 mm² contact) |
 | Counter / Faucet1 | glue | glue (9.62 mm² contact) |
 | Faucet1 / Faucet2 | glue | glue (37.41 mm² contact) |
 
@@ -103,8 +104,8 @@ python3 ~/.claude/skills/fc-scaled-model/scripts/fc_scaled_model.py build kitche
 
 | Run started (UTC) | Model | Tokens | Time spent | Cost (USD) |
 |---|---|---:|---:|---:|
-| 2026-11-17 12:40 | claude-opus-5-5, claude-haiku-5-5 | 2,612,526 | 2 h 26 min | $2.11 |
-| **Total** | | **2,612,526** | **2 h 26 min** | **$2.11** |
+| 2026-11-17 12:40 | claude-opus-5-5, claude-haiku-5-5 | 3,334,720 | 2 h 33 min | $2.37 |
+| **Total** | | **3,334,720** | **2 h 33 min** | **$2.37** |
 
 Cost is estimated at Anthropic API list prices.
 <!-- /fc-scaled-model:usage -->

@@ -20,9 +20,37 @@ freecad:
 A container for a cylindrical item 50 mm across and 40 mm tall. It has a cap that
 screws closed in about half a turn. It prints 1:1 without supports.
 
-`build_screw_cap_container.py` is the source of truth. It overwrites the `.FCStd` and
-both `.3mf` files, so change the constants at its top and rebuild instead of editing the
-FCStd.
+`build_screw_cap_container.py` is the source of truth. It overwrites the `.FCStd`, both
+`.3mf` files and `screw-cap-container-plan.pdf`, so change `PARAMETERS` or `DERIVED` at
+its top and rebuild instead of editing the FCStd.
+
+## Parametric model
+
+Every size in the FCStd comes from the `globals` spreadsheet, which has inputs such as
+`item_d`, `wiggle`, `wall`, `starts` and `pitch`, plus formulas such as
+`inner_d = item_d + wiggle` and `cap_h = lead / 2 + lead_in + wall`. The geometry uses
+Part workbench features bound to those cells: cylinders and cuts, a helix, a sketch for
+the ridge profile, a sweep, a clip band, and a polar array for the starts.
+
+If you change a value in the sheet and recompute, the body, the cap and the plan views
+follow. The plan's dimension text, its PDF and the 3MFs are written at build time, so
+change the script and rebuild them after you change sizes.
+
+On every run the build reads the inside size off the solids and fails if it doesn't
+match `globals.inner_d` / `globals.inner_h`. It currently measures Ø52 × 42.
+
+## Plan
+
+There's a TechDraw page `Plan` in the FCStd, also written as
+`screw-cap-container-plan.pdf`: A3 landscape with an ISO 5457 frame. It has these views:
+
+- Section A-A at 2:1, hatched, with the thread visible. It's dimensioned with the
+  inside Ø52 and 42, body Ø56 and 44, cap Ø62.8 and 9, closed height 46, the 6 mm
+  engagement and the 2 mm floor.
+- Front at 1:1, with Ø62.8 × 46.
+- Top at 1:1, with the cutting plane A-A.
+- Isometric.
+- The `globals` table and the thread and print notes.
 
 ## Dimensions (mm)
 

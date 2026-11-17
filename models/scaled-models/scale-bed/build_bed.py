@@ -3,7 +3,7 @@
 Run with FreeCAD's own interpreter, from anywhere:
 
     /Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd \
-        models/bim/scale-bed/build_bed.py < /dev/null
+        models/scaled-models/scale-bed/build_bed.py < /dev/null
 
 Writes next to this file:
     scale-bed.FCStd             parametric model (spreadsheet "globals" + 3 bodies)

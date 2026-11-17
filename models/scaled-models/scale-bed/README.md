@@ -1,7 +1,7 @@
 ---
 title: "Scale Bed"
 slug: scale-bed
-category: bim
+category: scaled-models
 created: 2026-11-08
 updated: 2026-11-08
 version: 1
@@ -73,7 +73,7 @@ them, and it also overwrites any edits made directly in the FCStd:
 
 ```sh
 /Applications/FreeCAD.app/Contents/Resources/bin/freecadcmd \
-    models/bim/scale-bed/build_bed.py < /dev/null
+    models/scaled-models/scale-bed/build_bed.py < /dev/null
 ```
 
 ## Printing notes

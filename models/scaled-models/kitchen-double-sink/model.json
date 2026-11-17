@@ -1,0 +1,535 @@
+{
+  "title": "Kitchen double sink",
+  "slug": "kitchen-double-sink",
+  "scale": "1:50",
+  "bonding": "glue",
+  "description": "Double-basin kitchen sink set in a countertop on a hollow two-door base cabinet, with a goose neck faucet",
+  "tags": [
+    "sink",
+    "kitchen",
+    "fixture",
+    "faucet"
+  ],
+  "parameters": [
+    {
+      "alias": "counter_w",
+      "label": "Counter width",
+      "value": "100 cm"
+    },
+    {
+      "alias": "counter_d",
+      "label": "Counter depth (wall to front)",
+      "value": "60 cm"
+    },
+    {
+      "alias": "counter_t",
+      "label": "Counter thickness",
+      "value": "4 cm"
+    },
+    {
+      "alias": "counter_h",
+      "label": "Counter height",
+      "value": "90 cm",
+      "note": "Floor to top of counter"
+    },
+    {
+      "alias": "cab_d",
+      "label": "Cabinet depth",
+      "value": "58 cm"
+    },
+    {
+      "alias": "wall_t",
+      "label": "Cabinet wall thickness",
+      "value": "4 cm",
+      "note": "Prints at the 0.8 mm minimum at 1:50"
+    },
+    {
+      "alias": "door_t",
+      "label": "Door thickness",
+      "value": "2 cm"
+    },
+    {
+      "alias": "door_gap",
+      "label": "Gap around the doors",
+      "value": "3 cm"
+    },
+    {
+      "alias": "handle_w",
+      "label": "Handle width",
+      "value": "3 cm"
+    },
+    {
+      "alias": "handle_h",
+      "label": "Handle length",
+      "value": "15 cm"
+    },
+    {
+      "alias": "handle_t",
+      "label": "Handle projection",
+      "value": "2 cm"
+    },
+    {
+      "alias": "handle_inset",
+      "label": "Handle inset from the centre gap",
+      "value": "5 cm"
+    },
+    {
+      "alias": "handle_drop",
+      "label": "Handle top below the door top",
+      "value": "6 cm"
+    },
+    {
+      "alias": "basin_w",
+      "label": "Basin width",
+      "value": "38 cm"
+    },
+    {
+      "alias": "basin_l",
+      "label": "Basin length (front to back)",
+      "value": "40 cm"
+    },
+    {
+      "alias": "basin_depth",
+      "label": "Basin depth",
+      "value": "20 cm",
+      "note": "Counter top to basin floor"
+    },
+    {
+      "alias": "divider_w",
+      "label": "Divider between basins",
+      "value": "5 cm"
+    },
+    {
+      "alias": "basin_front",
+      "label": "Basin front edge from counter front",
+      "value": "8 cm"
+    },
+    {
+      "alias": "drain_r",
+      "label": "Drain radius",
+      "value": "4.5 cm"
+    },
+    {
+      "alias": "drain_depth",
+      "label": "Drain recess depth",
+      "value": "2 cm"
+    },
+    {
+      "alias": "tap_y",
+      "label": "Faucet centre from wall",
+      "value": "6 cm"
+    },
+    {
+      "alias": "tap_base_r",
+      "label": "Faucet base radius",
+      "value": "3.5 cm"
+    },
+    {
+      "alias": "tap_base_h",
+      "label": "Faucet base height",
+      "value": "3 cm"
+    },
+    {
+      "alias": "tap_r",
+      "label": "Goose neck tube radius",
+      "value": "2.5 cm",
+      "note": "Thicker than a real tube so it prints at 1:50"
+    },
+    {
+      "alias": "neck_h",
+      "label": "Goose neck height above counter",
+      "value": "40 cm"
+    },
+    {
+      "alias": "spout_drop",
+      "label": "Spout drop below the neck",
+      "value": "8 cm"
+    }
+  ],
+  "derived": [
+    {
+      "alias": "cab_h",
+      "label": "Cabinet height",
+      "formula": "counter_h - counter_t"
+    },
+    {
+      "alias": "basin_y0",
+      "label": "Basin front Y",
+      "formula": "-counter_d + basin_front"
+    },
+    {
+      "alias": "basin_yc",
+      "label": "Basin centre Y",
+      "formula": "basin_y0 + basin_l / 2"
+    },
+    {
+      "alias": "basin_floor",
+      "label": "Basin floor height",
+      "formula": "counter_h - basin_depth"
+    },
+    {
+      "alias": "basin_xc",
+      "label": "Basin centre offset X",
+      "formula": "divider_w / 2 + basin_w / 2"
+    },
+    {
+      "alias": "neck_z",
+      "label": "Goose neck arm height",
+      "formula": "counter_h + neck_h - tap_r"
+    },
+    {
+      "alias": "reach",
+      "label": "Spout reach",
+      "formula": "-tap_y - basin_yc"
+    },
+    {
+      "alias": "hollow_top",
+      "label": "Top of the hollow cabinet",
+      "formula": "basin_floor - drain_depth - wall_t"
+    },
+    {
+      "alias": "door_w",
+      "label": "Door width",
+      "formula": "counter_w / 2 - door_gap"
+    },
+    {
+      "alias": "door_h",
+      "label": "Door height",
+      "formula": "hollow_top - door_gap"
+    },
+    {
+      "alias": "front_y",
+      "label": "Door face Y",
+      "formula": "-cab_d - door_t"
+    }
+  ],
+  "parts": [
+    {
+      "name": "Cabinet",
+      "features": [
+        {
+          "name": "Body",
+          "type": "box",
+          "length": "counter_w",
+          "width": "cab_d",
+          "height": "cab_h",
+          "at": [
+            "-counter_w / 2",
+            "-cab_d",
+            "0"
+          ]
+        },
+        {
+          "name": "BasinLeftLow",
+          "type": "box",
+          "op": "cut",
+          "length": "basin_w",
+          "width": "basin_l",
+          "height": "cab_h - basin_floor",
+          "at": [
+            "-basin_xc - basin_w / 2",
+            "basin_y0",
+            "basin_floor"
+          ]
+        },
+        {
+          "name": "BasinRightLow",
+          "type": "box",
+          "op": "cut",
+          "length": "basin_w",
+          "width": "basin_l",
+          "height": "cab_h - basin_floor",
+          "at": [
+            "basin_xc - basin_w / 2",
+            "basin_y0",
+            "basin_floor"
+          ]
+        },
+        {
+          "name": "DrainLeft",
+          "type": "cylinder",
+          "op": "cut",
+          "radius": "drain_r",
+          "height": "drain_depth",
+          "at": [
+            "-basin_xc",
+            "basin_yc",
+            "basin_floor - drain_depth"
+          ]
+        },
+        {
+          "name": "DrainRight",
+          "type": "cylinder",
+          "op": "cut",
+          "radius": "drain_r",
+          "height": "drain_depth",
+          "at": [
+            "basin_xc",
+            "basin_yc",
+            "basin_floor - drain_depth"
+          ]
+        },
+        {
+          "name": "Hollow",
+          "type": "box",
+          "op": "cut",
+          "length": "counter_w - 2 * wall_t",
+          "width": "cab_d - 2 * wall_t",
+          "height": "hollow_top - wall_t",
+          "at": [
+            "-counter_w / 2 + wall_t",
+            "-cab_d + wall_t",
+            "wall_t"
+          ]
+        },
+        {
+          "name": "DoorLeft",
+          "type": "box",
+          "length": "door_w",
+          "width": "door_t",
+          "height": "door_h",
+          "at": [
+            "-counter_w / 2 + door_gap / 2",
+            "front_y",
+            "0"
+          ]
+        },
+        {
+          "name": "DoorRight",
+          "type": "box",
+          "length": "door_w",
+          "width": "door_t",
+          "height": "door_h",
+          "at": [
+            "door_gap / 2",
+            "front_y",
+            "0"
+          ]
+        },
+        {
+          "name": "FalseFront",
+          "type": "box",
+          "length": "counter_w - door_gap",
+          "width": "door_t",
+          "height": "cab_h - hollow_top",
+          "at": [
+            "-counter_w / 2 + door_gap / 2",
+            "front_y",
+            "hollow_top"
+          ]
+        },
+        {
+          "name": "HandleLeft",
+          "type": "box",
+          "length": "handle_w",
+          "width": "handle_t",
+          "height": "handle_h",
+          "at": [
+            "-door_gap / 2 - handle_inset - handle_w",
+            "front_y - handle_t",
+            "door_h - handle_drop - handle_h"
+          ]
+        },
+        {
+          "name": "HandleRight",
+          "type": "box",
+          "length": "handle_w",
+          "width": "handle_t",
+          "height": "handle_h",
+          "at": [
+            "door_gap / 2 + handle_inset",
+            "front_y - handle_t",
+            "door_h - handle_drop - handle_h"
+          ]
+        }
+      ],
+      "splits": [
+        {
+          "axis": "z",
+          "at": "hollow_top"
+        }
+      ]
+    },
+    {
+      "name": "Counter",
+      "features": [
+        {
+          "name": "Slab",
+          "type": "box",
+          "length": "counter_w",
+          "width": "counter_d",
+          "height": "counter_t",
+          "at": [
+            "-counter_w / 2",
+            "-counter_d",
+            "cab_h"
+          ]
+        },
+        {
+          "name": "BasinLeft",
+          "type": "box",
+          "op": "cut",
+          "length": "basin_w",
+          "width": "basin_l",
+          "height": "counter_t",
+          "at": [
+            "-basin_xc - basin_w / 2",
+            "basin_y0",
+            "cab_h"
+          ]
+        },
+        {
+          "name": "BasinRight",
+          "type": "box",
+          "op": "cut",
+          "length": "basin_w",
+          "width": "basin_l",
+          "height": "counter_t",
+          "at": [
+            "basin_xc - basin_w / 2",
+            "basin_y0",
+            "cab_h"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Faucet",
+      "features": [
+        {
+          "name": "Base",
+          "type": "cylinder",
+          "radius": "tap_base_r",
+          "height": "tap_base_h",
+          "at": [
+            "0",
+            "-tap_y",
+            "counter_h"
+          ]
+        },
+        {
+          "name": "Neck",
+          "type": "cylinder",
+          "radius": "tap_r",
+          "height": "neck_z - counter_h - tap_base_h",
+          "at": [
+            "0",
+            "-tap_y",
+            "counter_h + tap_base_h"
+          ]
+        },
+        {
+          "name": "Elbow",
+          "type": "sphere",
+          "radius": "tap_r",
+          "at": [
+            "0",
+            "-tap_y",
+            "neck_z"
+          ]
+        },
+        {
+          "name": "Arm",
+          "type": "cylinder",
+          "axis": "-y",
+          "radius": "tap_r",
+          "height": "reach",
+          "at": [
+            "0",
+            "-tap_y",
+            "neck_z"
+          ]
+        },
+        {
+          "name": "Bend",
+          "type": "sphere",
+          "radius": "tap_r",
+          "at": [
+            "0",
+            "basin_yc",
+            "neck_z"
+          ]
+        },
+        {
+          "name": "Spout",
+          "type": "cylinder",
+          "axis": "-z",
+          "radius": "tap_r",
+          "height": "spout_drop",
+          "at": [
+            "0",
+            "basin_yc",
+            "neck_z"
+          ]
+        }
+      ]
+    }
+  ],
+  "plan": {
+    "dimensions": [
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "0",
+        "to": "door_h"
+      },
+      {
+        "view": "front",
+        "axis": "z",
+        "from": "0",
+        "to": "counter_h"
+      },
+      {
+        "view": "right",
+        "axis": "z",
+        "from": "basin_floor",
+        "to": "counter_h"
+      },
+      {
+        "view": "right",
+        "axis": "z",
+        "from": "counter_h",
+        "to": "neck_z + tap_r"
+      },
+      {
+        "view": "top",
+        "axis": "x",
+        "from": "-basin_xc - basin_w / 2",
+        "to": "-divider_w / 2"
+      },
+      {
+        "view": "top",
+        "axis": "y",
+        "from": "basin_y0",
+        "to": "basin_y0 + basin_l"
+      },
+      {
+        "view": "front",
+        "axis": "x",
+        "from": "door_gap / 2",
+        "to": "door_gap / 2 + door_w"
+      }
+    ]
+  },
+  "usage": [
+    {
+      "session": "493b8119-615e-47d8-a366-74f524e2b9e0",
+      "started": "2026-11-17T12:40:45+00:00",
+      "ended": "2026-11-17T13:52:29+00:00",
+      "elapsed_s": 4304,
+      "requests": 21,
+      "models": {
+        "claude-opus-5-5": 21
+      },
+      "tokens": {
+        "input": 46,
+        "output": 26554,
+        "cache_write": 44334,
+        "cache_read": 1788930,
+        "total": 1859864
+      },
+      "cost_usd": 1.2437,
+      "unpriced_models": []
+    }
+  ]
+}

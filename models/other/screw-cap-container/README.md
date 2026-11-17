@@ -3,7 +3,7 @@ title: "Screw Cap Container"
 slug: screw-cap-container
 category: other
 created: 2026-11-15
-updated: 2026-11-15
+updated: 2026-11-17
 version: 1
 status: draft
 description: "Screw-cap container for a 50 x 40 mm cylinder; 4-start thread closes in half a turn"
@@ -37,7 +37,7 @@ follow. The plan's dimension text, its PDF and the 3MFs are written at build tim
 change the script and rebuild them after you change sizes.
 
 On every run the build reads the inside size off the solids and fails if it doesn't
-match `globals.inner_d` / `globals.inner_h`. It currently measures Ø52 × 42.
+match `globals.inner_d` / `globals.inner_h`. It currently measures Ø54 × 44.
 
 ## Plan
 
@@ -45,9 +45,9 @@ There's a TechDraw page `Plan` in the FCStd, also written as
 `screw-cap-container-plan.pdf`: A3 landscape with an ISO 5457 frame. It has these views:
 
 - Section A-A at 2:1, hatched, with the thread visible. It's dimensioned with the
-  inside Ø52 and 42, body Ø56 and 44, cap Ø62.8 and 9, closed height 46, the 6 mm
+  inside Ø54 and 44, body Ø58 and 46, cap Ø64.8 and 9, closed height 48, the 6 mm
   engagement and the 2 mm floor.
-- Front at 1:1, with Ø62.8 × 46.
+- Front at 1:1, with Ø64.8 × 48.
 - Top at 1:1, with the cutting plane A-A.
 - Isometric.
 - The `globals` table and the thread and print notes.
@@ -56,11 +56,11 @@ There's a TechDraw page `Plan` in the FCStd, also written as
 
 | | |
 |---|---|
-| Inside (item + 2 mm wiggle room) | Ø52 x 42 (floor to underside of the closed cap) |
+| Inside (item + 4 mm wiggle room) | Ø54 x 44 (floor to underside of the closed cap) |
 | Wall, floor, cap wall, cap top | 2 |
-| Body | Ø56 (Ø58 over the thread) x 44 |
-| Cap | Ø62.8 x 9 |
-| Closed | Ø62.8 x 46 |
+| Body | Ø58 (Ø60 over the thread) x 46 |
+| Cap | Ø64.8 x 9 |
+| Closed | Ø64.8 x 48 |
 
 ## Thread
 
@@ -79,8 +79,8 @@ the whole screw path, in 30° steps up to 180°, with no interference.
 
 | File | Orientation | Size |
 |---|---|---|
-| `screw-cap-container-body.3mf` | upright, opening up | 58 x 58 x 44 mm |
-| `screw-cap-container-cap.3mf` | top on the bed | 62.8 x 62.8 x 9 mm |
+| `screw-cap-container-body.3mf` | upright, opening up | 60 x 60 x 46 mm |
+| `screw-cap-container-cap.3mf` | top on the bed | 64.8 x 64.8 x 9 mm |
 
 ## Rebuilding
 

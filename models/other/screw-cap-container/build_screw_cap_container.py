@@ -10,13 +10,13 @@ This script is the source of truth. It overwrites screw-cap-container.FCStd, the
 
 Geometry (mm, Z = 0 is the bottom of the body, Z up, cap shown closed):
 
-- Body: inside 52 x 42 (item + 2 mm wiggle room), 2 mm wall and floor.
+- Body: inside 54 x 44 (item + 4 mm wiggle room), 2 mm wall and floor.
 - Thread: 4-start, right-handed, pitch 3 mm, lead 12 mm, 45 deg flanks so both
   parts print without supports. Half a turn moves the cap lead / 2 = 6 mm, which is
   the full engagement length, so the cap goes from first contact to closed in about
   half a turn.
 - Cap: screws over an external thread on the body neck. Height = top + engagement +
-  lead-in. Closed, the cavity is 42 mm from the floor to the underside of the cap.
+  lead-in. Closed, the cavity is 44 mm from the floor to the underside of the cap.
 
 The FCStd is parametric: every size comes from the `globals` spreadsheet (inputs in
 PARAMETERS, formulas in DERIVED), so editing a value there and recomputing reshapes the
@@ -47,7 +47,7 @@ AUTHOR = "Luis C. Berrocal"
 PARAMETERS = [
     ("item_d", "Item diameter", "50 mm", "The cylinder to store"),
     ("item_h", "Item height", "40 mm", ""),
-    ("wiggle", "Wiggle room", "2 mm", "Added to inside diameter and height"),
+    ("wiggle", "Wiggle room", "4 mm", "Added to inside diameter and height"),
     ("wall", "Wall thickness", "2 mm", "Body wall and floor, cap wall and top"),
     ("starts", "Thread starts", "4", "Number of parallel threads"),
     ("pitch", "Thread pitch", "3 mm", "Crest to crest along the axis"),

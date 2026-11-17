@@ -1,7 +1,7 @@
 {
   "title": "Kitchen double sink",
   "slug": "kitchen-double-sink",
-  "scale": "1:50",
+  "scale": "1:20",
   "bonding": "glue",
   "description": "Double-basin kitchen sink set in a countertop on a hollow two-door base cabinet, with a goose neck faucet",
   "tags": [
@@ -40,8 +40,7 @@
     {
       "alias": "wall_t",
       "label": "Cabinet wall thickness",
-      "value": "4 cm",
-      "note": "Prints at the 0.8 mm minimum at 1:50"
+      "value": "4 cm"
     },
     {
       "alias": "door_t",
@@ -133,7 +132,7 @@
       "alias": "tap_r",
       "label": "Goose neck tube radius",
       "value": "2.5 cm",
-      "note": "Thicker than a real tube so it prints at 1:50"
+      "note": "Thicker than a real tube so it prints at small scales"
     },
     {
       "alias": "neck_h",
@@ -515,20 +514,21 @@
     {
       "session": "493b8119-615e-47d8-a366-74f524e2b9e0",
       "started": "2026-11-17T12:40:45+00:00",
-      "ended": "2026-11-17T13:52:29+00:00",
-      "elapsed_s": 4304,
-      "requests": 21,
+      "ended": "2026-11-17T15:07:30+00:00",
+      "elapsed_s": 8805,
+      "requests": 28,
       "models": {
-        "claude-opus-5-5": 21
+        "claude-opus-5-5": 25,
+        "claude-haiku-5-5": 3
       },
       "tokens": {
-        "input": 46,
-        "output": 26554,
-        "cache_write": 44334,
-        "cache_read": 1788930,
-        "total": 1859864
+        "input": 62,
+        "output": 30152,
+        "cache_write": 207459,
+        "cache_read": 2374853,
+        "total": 2612526
       },
-      "cost_usd": 1.2437,
+      "cost_usd": 2.1114,
       "unpriced_models": []
     }
   ]
